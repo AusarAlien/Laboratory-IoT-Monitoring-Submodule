@@ -1,0 +1,108 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>智能预警</title>
+    <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_common.css' %}?v=2026081205">
+    <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_warning_list.css' %}?v=2026081205">
+</head>
+
+<body>
+    <main class="page-container">
+        <section class="metric-panel">
+            <table class="metric-table">
+                <thead>
+                    <tr>
+                        <th>今日预警</th>
+                        <th>待确认</th>
+                        <th>处理中</th>
+                        <th>已解除</th>
+                        <th>通知失败</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong id="mTotal">0</strong><span>条</span></td>
+                        <td class="danger"><strong id="mPending">0</strong><span>条</span></td>
+                        <td class="warning"><strong id="mDoing">0</strong><span>条</span></td>
+                        <td class="success"><strong id="mDone">0</strong><span>条</span></td>
+                        <td class="danger"><strong id="mFail">0</strong><span>次</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <div class="query-panel">
+            <div class="query-grid"><label class="form-item"><span>所属科室</span><select id="qDept">
+                        <option value="">全部科室</option>
+                    </select></label><label class="form-item"><span>监测对象</span><select id="qObject">
+                        <option value="">全部对象</option>
+                    </select></label><label class="form-item"><span>环境项目</span><select id="qProject">
+                        <option value="">全部项目</option>
+                    </select></label><label class="form-item"><span>预警等级</span><select id="qLevel">
+                        <option value="">全部等级</option>
+                        <option>一般</option>
+                        <option>重要</option>
+                        <option>紧急</option>
+                    </select></label><label class="form-item"><span>处置状态</span><select id="qStatus">
+                        <option value="">全部状态</option>
+                        <option>待确认</option>
+                        <option>处理中</option>
+                        <option>已解除</option>
+                    </select></label>
+                <div class="query-actions"><button class="button" id="reset">重置</button><button class="button primary"
+                        id="search">查询</button></div>
+            </div>
+        </div>
+        <section class="list-panel">
+            <header class="panel-title"><i></i>
+                <h1>环境智能预警列表</h1><em id="summary"></em>
+            </header>
+            <div class="table-scroll">
+                <table class="alarm-table">
+                    <thead>
+                        <tr>
+                            <th>操作</th>
+                            <th>序号</th>
+                            <th>预警时间</th>
+                            <th>所属科室</th>
+                            <th>监测对象</th>
+                            <th>环境项目</th>
+                            <th>监测值</th>
+                            <th>预警等级</th>
+                            <th>持续时长</th>
+                            <th>声光报警</th>
+                            <th>短信通知</th>
+                            <th>客户端通知</th>
+                            <th>平台推送</th>
+                            <th>处置状态</th>
+                            <th>预警内容</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rows"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <div id="modal" class="modal is-hidden">
+        <div class="mask" data-close></div>
+        <section class="modal-card">
+            <header>
+                <h2 id="modalTitle"></h2><button data-close>×</button>
+            </header>
+            <form id="form">
+                <div class="modal-body" id="modalBody"></div>
+                <footer><button type="button" class="button" data-close>取消</button><button class="button primary"
+                        id="submit">保存</button></footer>
+            </form>
+        </section>
+    </div>
+    <div id="toast" class="toast is-hidden"></div>
+    <script src="{% static 'ynjksys/syswljk_hjjc_mock.js' %}?v=2026081205"></script>
+    <script src="{% static 'ynjksys/syswljk_hjjc_service.js' %}?v=2026081205"></script>
+    <script src="{% static 'ynjksys/syswljk_hjjc_warning_list.js' %}?v=2026081205"></script>
+</body>
+
+</html>

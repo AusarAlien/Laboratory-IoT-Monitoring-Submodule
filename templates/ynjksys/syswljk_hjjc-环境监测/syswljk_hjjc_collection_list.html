@@ -1,0 +1,100 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>环境条件采集</title>
+    <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_common.css' %}?v=2026081202">
+    <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_collection_list.css' %}?v=2026081202">
+    <script src="{% static 'lib/echarts/echarts.min.js' %}"></script>
+</head>
+
+<body>
+    <main class="page-container">
+        <section class="metric-panel">
+            <table class="metric-table">
+                <thead>
+                    <tr>
+                        <th>接入对象</th>
+                        <th>采集设备</th>
+                        <th>今日采集</th>
+                        <th>最新正常</th>
+                        <th>最新异常</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong id="mObjects">0</strong><span>个</span></td>
+                        <td><strong id="mDevices">0</strong><span>台</span></td>
+                        <td><strong id="mToday">0</strong><span>条</span></td>
+                        <td class="success"><strong id="mNormal">0</strong><span>项</span></td>
+                        <td class="danger"><strong id="mAbnormal">0</strong><span>项</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <div class="query-panel">
+            <div class="query-grid"><label class="form-item"><span>所属科室</span><select id="qDept">
+                        <option value="">全部科室</option>
+                    </select></label><label class="form-item"><span>对象类型</span><select id="qType">
+                        <option value="">全部类型</option>
+                    </select></label><label class="form-item"><span>监测对象</span><select id="qObject">
+                        <option value="">全部对象</option>
+                    </select></label><label class="form-item"><span>环境项目</span><select id="qProject"></select></label>
+                <div class="query-actions"><button class="button" id="btnReset">重置</button><button
+                        class="button primary" id="btnSearch">查询</button></div>
+            </div>
+        </div>
+        <section class="chart-card" style="margin-bottom:14px">
+            <header><i></i>
+                <h2 id="trendTitle">环境条件趋势</h2><em style="margin-left:auto;color:#8793a3">数据来源：设备自动采集</em>
+            </header>
+            <div id="trendChart" class="chart"></div>
+        </section>
+        <section class="list-panel">
+            <header class="panel-title"><i></i>
+                <h1>最新采集结果</h1><em id="resultCount"></em>
+            </header>
+            <div class="table-scroll">
+                <table class="collection-table">
+                    <thead>
+                        <tr>
+                            <th>操作</th>
+                            <th>序号</th>
+                            <th>采集时间</th>
+                            <th>所属科室</th>
+                            <th>监测对象</th>
+                            <th>对象类型</th>
+                            <th>设备编号</th>
+                            <th>环境项目</th>
+                            <th>采集值</th>
+                            <th>单位</th>
+                            <th>数据状态</th>
+                            <th>采集方式</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <div id="modal" class="modal is-hidden">
+        <div class="mask" data-close></div>
+        <section class="modal-card">
+            <header>
+                <h2>采集结果详情</h2><button data-close>×</button>
+            </header>
+            <div class="modal-body">
+                <div class="detail-grid" id="detailContent"></div>
+            </div>
+            <footer><button class="button primary" data-close>关闭</button></footer>
+        </section>
+    </div>
+    <script src="{% static 'ynjksys/syswljk_hjjc_mock.js' %}?v=2026081202"></script>
+    <script src="{% static 'ynjksys/syswljk_hjjc_service.js' %}?v=2026081202"></script>
+    <script src="{% static 'ynjksys/syswljk_hjjc_collection_list.js' %}?v=2026081202"></script>
+</body>
+
+</html>

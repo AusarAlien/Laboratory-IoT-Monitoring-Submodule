@@ -1,0 +1,108 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>维护环境条件项目</title>
+    <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_common.css' %}?v=2026081201">
+    <script src="{% static 'common/isvar.js' %}"></script>
+    <script src="{% static 'common/isqrydata.js' %}"></script>
+    <script src="{% static 'common/issubmit.js' %}"></script>
+</head>
+
+<body>
+    <main class="page-container">
+        <section class="metric-panel">
+            <table class="metric-table">
+                <thead>
+                    <tr>
+                        <th>环境项目</th>
+                        <th>启用项目</th>
+                        <th>参与预警</th>
+                        <th>水质项目</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong id="metricTotal">0</strong><span>项</span></td>
+                        <td><strong id="metricEnabled">0</strong><span>项</span></td>
+                        <td><strong id="metricWarning">0</strong><span>项</span></td>
+                        <td><strong id="metricWater">0</strong><span>项</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <div class="query-panel">
+            <div class="query-grid"><label class="form-item"><span>项目名称</span><input id="keyword"
+                        placeholder="项目名称或编码"></label><label class="form-item"><span>项目分类</span><select id="category">
+                        <option value="">全部分类</option>
+                        <option>温湿度</option>
+                        <option>空气环境</option>
+                        <option>水质</option>
+                    </select></label><label class="form-item"><span>使用状态</span><select id="status">
+                        <option value="">全部状态</option>
+                        <option>启用</option>
+                        <option>停用</option>
+                    </select></label><label class="form-item"><span>参与预警</span><select id="warning">
+                        <option value="">全部</option>
+                        <option value="1">是</option>
+                        <option value="0">否</option>
+                    </select></label>
+                <div class="query-actions"><button class="button" id="reset">重置</button><button class="button primary"
+                        id="search">查询</button></div>
+            </div>
+        </div>
+        <section class="list-panel">
+            <header class="panel-title"><i></i>
+                <h1>环境条件项目列表</h1><em id="summary"></em><button class="button primary title-action"
+                    id="add">新增项目</button>
+            </header>
+            <div class="table-scroll">
+                <table class="project-table">
+                    <thead>
+                        <tr>
+                            <th class="actions wide">操作</th>
+                            <th>序号</th>
+                            <th>项目编码</th>
+                            <th>项目名称</th>
+                            <th>项目分类</th>
+                            <th>数据类型</th>
+                            <th>默认单位</th>
+                            <th>小数位数</th>
+                            <th>允许上下限</th>
+                            <th>参与预警</th>
+                            <th>状态</th>
+                            <th>显示顺序</th>
+                            <th>说明</th>
+                            <th>修改时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rows"></tbody>
+                </table>
+                <div id="empty" class="empty is-hidden">暂无符合条件的环境项目</div>
+            </div>
+            <div id="pager" class="pagination"></div>
+        </section>
+    </main>
+    <div id="modal" class="modal is-hidden">
+        <div class="mask" data-close></div>
+        <section class="modal-card">
+            <header>
+                <h2 id="modalTitle"></h2><button data-close>×</button>
+            </header>
+            <form id="form">
+                <div id="modalBody" class="modal-body"></div>
+                <footer><button type="button" class="button" data-close>取消</button><button id="submit" type="submit"
+                        class="button primary">保存</button></footer>
+            </form>
+        </section>
+    </div>
+    <div id="toast" class="toast is-hidden"></div>
+    <script src="{% static 'ynjksys/syswljk_hjjc_mock.js' %}?v=2026081201"></script>
+    <script src="{% static 'ynjksys/syswljk_hjjc_service.js' %}?v=2026081201"></script>
+    <script src="{% static 'ynjksys/syswljk_hjjc_project_list.js' %}?v=2026081201"></script>
+</body>
+
+</html>

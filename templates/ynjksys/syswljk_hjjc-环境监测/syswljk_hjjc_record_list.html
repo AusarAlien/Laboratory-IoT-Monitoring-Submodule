@@ -1,0 +1,117 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>环境记录</title>
+    <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_common.css' %}?v=2026081204">
+    <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_record_list.css' %}?v=2026081204">
+    <script src="{% static 'lib/echarts/echarts.min.js' %}"></script>
+</head>
+
+<body>
+    <main class="page-container">
+        <section class="metric-panel">
+            <table class="metric-table">
+                <thead>
+                    <tr>
+                        <th>今日环境记录</th>
+                        <th>自动采集</th>
+                        <th>检验时抓取</th>
+                        <th>人工补录</th>
+                        <th>异常记录</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong id="mTotal">0</strong><span>条</span></td>
+                        <td><strong id="mAuto">0</strong><span>条</span></td>
+                        <td><strong id="mInspect">0</strong><span>条</span></td>
+                        <td><strong id="mManual">0</strong><span>条</span></td>
+                        <td class="danger"><strong id="mBad">0</strong><span>条</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <div class="query-panel">
+            <div class="query-grid"><label class="form-item date-item"><span>记录时间</span><span class="date-range"><input
+                            id="qStart" type="date"><b>至</b><input id="qEnd" type="date"></span></label><label
+                    class="form-item"><span>所属科室</span><select id="qDept">
+                        <option value="">全部科室</option>
+                    </select></label><label class="form-item"><span>监测对象</span><select id="qObject">
+                        <option value="">全部对象</option>
+                    </select></label><label class="form-item"><span>对象类型</span><select id="qType">
+                        <option value="">全部类型</option>
+                    </select></label><label class="form-item"><span>环境项目</span><select
+                        id="qProject"></select></label><label class="form-item"><span>记录方式</span><select id="qMode">
+                        <option value="">全部方式</option>
+                        <option>自动采集</option>
+                        <option>检验时抓取</option>
+                        <option>人工补录</option>
+                    </select></label><label class="form-item"><span>数据状态</span><select id="qStatus">
+                        <option value="">全部状态</option>
+                        <option>正常</option>
+                        <option>异常</option>
+                    </select></label>
+                <div class="query-actions"><button class="button" id="reset">重置</button><button class="button primary"
+                        id="search">查询</button></div>
+            </div>
+        </div>
+        <section class="chart-card" style="margin-bottom:14px">
+            <header><i></i>
+                <h2 id="trendTitle">环境变化趋势</h2>
+            </header>
+            <div id="trendChart" class="chart"></div>
+        </section>
+        <section class="list-panel">
+            <header class="panel-title"><i></i>
+                <h1>环境记录列表</h1><em id="summary"></em><button class="button title-action"
+                    id="export">导出当前结果</button><button class="button primary title-action" id="add"
+                    style="margin-left:10px">人工补录</button>
+            </header>
+            <div class="table-scroll">
+                <table class="record-table">
+                    <thead>
+                        <tr>
+                            <th>操作</th>
+                            <th>序号</th>
+                            <th>记录时间</th>
+                            <th>所属科室</th>
+                            <th>监测对象</th>
+                            <th>对象类型</th>
+                            <th>环境项目</th>
+                            <th>记录值</th>
+                            <th>单位</th>
+                            <th>数据状态</th>
+                            <th>记录方式</th>
+                            <th>关联检测记录</th>
+                            <th>数据来源</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rows"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <div id="modal" class="modal is-hidden">
+        <div class="mask" data-close></div>
+        <section class="modal-card">
+            <header>
+                <h2 id="modalTitle"></h2><button data-close>×</button>
+            </header>
+            <form id="form">
+                <div class="modal-body" id="modalBody"></div>
+                <footer><button type="button" class="button" data-close>取消</button><button class="button primary"
+                        id="submit">保存</button></footer>
+            </form>
+        </section>
+    </div>
+    <div id="toast" class="toast is-hidden"></div>
+    <script src="{% static 'ynjksys/syswljk_hjjc_mock.js' %}?v=2026081204"></script>
+    <script src="{% static 'ynjksys/syswljk_hjjc_service.js' %}?v=2026081204"></script>
+    <script src="{% static 'ynjksys/syswljk_hjjc_record_list.js' %}?v=2026081204"></script>
+</body>
+
+</html>
