@@ -1,0 +1,63 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>数据采集管理</title>
+  <link rel="stylesheet" href="{% static 'ynjksys/syswljk_sjcj_list.css' %}?v=2026081202">
+  <script src="{% static 'common/isvar.js' %}"></script>
+  <script src="{% static 'common/isqrydata.js' %}"></script>
+</head>
+<body>
+  <main class="page-container">
+    <section class="metric-table-panel" aria-label="采集概况">
+      <table class="metric-table">
+        <thead><tr><th>今日采集批次</th><th>今日采集数据</th><th>采集成功率</th><th>采集失败</th></tr></thead>
+        <tbody><tr><td><strong id="metricBatch">0</strong><span>批</span></td><td><strong id="metricRows">0</strong><span>条</span></td><td><strong id="metricRate">--</strong><span>%</span></td><td class="metric-danger"><strong id="metricFailed">0</strong><span>次</span></td></tr></tbody>
+      </table>
+    </section>
+
+    <nav class="page-tabs">
+      <button class="page-tab is-active" data-tab="result">采集结果</button>
+      <button class="page-tab" data-tab="log">采集日志</button>
+    </nav>
+
+    <section id="resultPanel" class="tab-panel">
+      <div class="query-panel"><div class="query-grid">
+        <label class="form-item date-item"><span>采集时间</span><div class="date-range"><input id="resultStart" type="date"><b>至</b><input id="resultEnd" type="date"></div></label>
+        <label class="form-item"><span>设备名称</span><select id="resultDevice"><option value="">全部设备</option></select></label>
+        <label class="form-item"><span>设备类型</span><select id="resultType"><option value="">全部类型</option></select></label>
+        <label class="form-item"><span>监测指标</span><input id="resultMetric" placeholder="请输入指标名称"></label>
+        <label class="form-item"><span>数据状态</span><select id="resultQuality"><option value="">全部状态</option><option>正常</option><option>超限</option><option>无效</option></select></label>
+        <div class="query-actions"><button class="button" data-reset="result">重置</button><button class="button button-primary" data-search="result">查询</button></div>
+      </div></div>
+      <section class="list-panel"><header class="panel-title"><i></i><h2>设备采集结果</h2><em id="resultSummary"></em><button id="resultExport" class="button title-action">导出当前结果</button></header>
+        <div class="table-scroll"><table class="result-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>采集时间</th><th>设备编号</th><th>设备名称</th><th>设备类型</th><th>所属区域</th><th>监测指标</th><th>采集值</th><th>单位</th><th>数据状态</th><th>采集批次</th></tr></thead><tbody id="resultRows"></tbody></table><div id="resultEmpty" class="empty is-hidden">暂无符合条件的采集结果</div></div>
+        <div id="resultPager" class="pagination"></div>
+      </section>
+    </section>
+
+    <section id="logPanel" class="tab-panel is-hidden">
+      <div class="query-panel"><div class="query-grid">
+        <label class="form-item date-item"><span>日志时间</span><div class="date-range"><input id="logStart" type="date"><b>至</b><input id="logEnd" type="date"></div></label>
+        <label class="form-item"><span>设备名称</span><select id="logDevice"><option value="">全部设备</option></select></label>
+        <label class="form-item"><span>采集方式</span><select id="logMode"><option value="">全部方式</option><option>主动采集</option><option>设备推送</option><option>外部同步</option></select></label>
+        <label class="form-item"><span>执行结果</span><select id="logStatus"><option value="">全部结果</option><option>成功</option><option>失败</option></select></label>
+        <label class="form-item"><span>批次编号</span><input id="logBatch" placeholder="请输入批次编号"></label>
+        <div class="query-actions"><button class="button" data-reset="log">重置</button><button class="button button-primary" data-search="log">查询</button></div>
+      </div></div>
+      <section class="list-panel"><header class="panel-title"><i></i><h2>数据采集日志</h2><em id="logSummary"></em></header>
+        <div class="table-scroll"><table class="log-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>开始时间</th><th>结束时间</th><th>设备名称</th><th>采集方式</th><th>执行结果</th><th>采集条数</th><th>耗时</th><th>批次编号</th><th>消息摘要</th></tr></thead><tbody id="logRows"></tbody></table><div id="logEmpty" class="empty is-hidden">暂无符合条件的采集日志</div></div>
+        <div id="logPager" class="pagination"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="detailModal" class="modal is-hidden" role="dialog" aria-modal="true"><div class="modal-mask" data-close></div><section class="modal-card"><header><h2 id="detailTitle">采集详情</h2><button data-close>×</button></header><div id="detailBody" class="detail-body"></div><footer><button class="button button-primary" data-close>关闭</button></footer></section></div>
+  <div id="toast" class="toast is-hidden"></div>
+  <script src="{% static 'ynjksys/syswljk_sjcj_mock.js' %}?v=2026081201"></script>
+  <script src="{% static 'ynjksys/syswljk_sjcj_service.js' %}?v=2026081201"></script>
+  <script src="{% static 'ynjksys/syswljk_sjcj_list.js' %}?v=2026081201"></script>
+</body>
+</html>

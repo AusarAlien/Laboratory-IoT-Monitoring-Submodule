@@ -1,0 +1,113 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>物联配置管理</title>
+    <link rel="stylesheet" href="{% static 'ynjksys/syswljk_wlpz_list.css' %}?v=2026081203" />
+    <script src="{% static 'common/isvar.js' %}"></script>
+    <script src="{% static 'common/isqrydata.js' %}"></script>
+    <script src="{% static 'common/issubmit.js' %}"></script>
+  </head>
+  <body>
+    <main class="page-container">
+      <section class="metric-table-panel metric-table-global" aria-label="设备配置统计">
+        <table class="metric-table">
+          <thead><tr><th>设备</th><th>启用预警</th><th>区域</th></tr></thead>
+          <tbody><tr><td><strong id="deviceCount">0</strong><span>台</span></td><td><strong id="warningCount">0</strong><span>台</span></td><td><strong id="areaCount">0</strong><span>个</span></td></tr></tbody>
+        </table>
+      </section>
+
+      <nav class="page-tabs" aria-label="物联配置分类">
+        <button class="page-tab is-active" data-tab="device">设备管理</button>
+        <button class="page-tab" data-tab="type">设备类型</button>
+        <button class="page-tab" data-tab="account">物联权限</button>
+        <button class="page-tab" data-tab="area">区域管理</button>
+      </nav>
+
+      <section id="devicePanel" class="tab-panel">
+        <div class="query-panel">
+          <div class="query-grid">
+            <label class="form-item"><span>设备名称</span><input id="deviceKeyword" placeholder="设备名称或编号" /></label>
+            <label class="form-item"><span>设备类型</span><select id="deviceTypeFilter"><option value="">全部类型</option></select></label>
+            <label class="form-item"><span>所属区域</span><select id="deviceAreaFilter"><option value="">全部区域</option></select></label>
+            <label class="form-item"><span>预警状态</span><select id="deviceWarningFilter"><option value="">全部状态</option><option value="1">已启用</option><option value="0">未启用</option></select></label>
+            <div class="query-actions"><button class="button" data-reset="device">重置</button><button class="button button-primary" data-search="device">查询</button></div>
+          </div>
+        </div>
+        <section class="list-panel">
+          <header class="panel-title"><i></i><h2>设备列表</h2><em id="deviceSummary"></em><button class="button button-primary title-action" data-add="device">新增设备</button></header>
+          <div class="table-scroll">
+            <table class="device-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>设备编号</th><th>设备名称</th><th>设备类型</th><th>所属区域</th><th>连接信息</th><th>采集周期</th><th>预警</th><th>状态</th><th>修改人员</th><th>修改时间</th></tr></thead><tbody id="deviceRows"></tbody></table>
+            <div id="deviceEmpty" class="empty is-hidden">暂无符合条件的设备</div>
+          </div>
+          <div id="devicePager" class="pagination"></div>
+        </section>
+      </section>
+
+      <section id="typePanel" class="tab-panel is-hidden">
+        <div class="query-panel compact-query">
+          <div class="query-grid">
+            <label class="form-item"><span>类型名称</span><input id="typeKeyword" placeholder="类型名称或编码" /></label>
+            <label class="form-item"><span>使用状态</span><select id="typeStatusFilter"><option value="">全部状态</option><option>启用</option><option>停用</option></select></label>
+            <div class="query-actions"><button class="button" data-reset="type">重置</button><button class="button button-primary" data-search="type">查询</button></div>
+          </div>
+        </div>
+        <section class="list-panel">
+          <header class="panel-title"><i></i><h2>设备类型列表</h2><em id="typeSummary"></em><button class="button button-primary title-action" data-add="type">新增类型</button></header>
+          <div class="table-scroll">
+            <table class="type-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>类型编码</th><th>类型名称</th><th>配置项</th><th>设备数量</th><th>状态</th><th>说明</th><th>修改时间</th></tr></thead><tbody id="typeRows"></tbody></table>
+            <div id="typeEmpty" class="empty is-hidden">暂无符合条件的设备类型</div>
+          </div>
+          <div id="typePager" class="pagination"></div>
+        </section>
+      </section>
+
+      <section id="accountPanel" class="tab-panel is-hidden">
+        <div class="query-panel compact-query">
+          <div class="query-grid">
+            <label class="form-item"><span>用户账号</span><input id="accountKeyword" placeholder="账号或用户名称" /></label>
+            <label class="form-item"><span>账号状态</span><select id="accountStatusFilter"><option value="">全部状态</option><option>启用</option><option>停用</option><option>锁定</option></select></label>
+            <div class="query-actions"><button class="button" data-reset="account">重置</button><button class="button button-primary" data-search="account">查询</button></div>
+          </div>
+        </div>
+        <section class="list-panel">
+          <header class="panel-title"><i></i><h2>物联用户列表</h2><em id="accountSummary"></em><button class="button button-primary title-action" data-add="account">新增用户</button></header>
+          <div class="table-scroll">
+            <table class="account-table"><thead><tr><th class="actions wide-actions">操作</th><th>序号</th><th>用户账号</th><th>用户名称</th><th>权限范围</th><th>授权区域</th><th>账号状态</th><th>最后登录</th><th>修改时间</th></tr></thead><tbody id="accountRows"></tbody></table>
+            <div id="accountEmpty" class="empty is-hidden">暂无符合条件的物联用户</div>
+          </div>
+          <div id="accountPager" class="pagination"></div>
+        </section>
+      </section>
+
+      <section id="areaPanel" class="tab-panel is-hidden">
+        <div class="area-layout">
+          <aside class="area-tree-card">
+            <header class="panel-title"><i></i><h2>区域分区</h2><button class="icon-button" data-add="area" title="新增区域">＋</button></header>
+            <div id="areaTree" class="area-tree"></div>
+          </aside>
+          <section class="list-panel area-device-card">
+            <header class="panel-title"><i></i><h2 id="areaDeviceTitle">全部区域设备</h2><em id="areaSummary"></em><button id="assignDevice" class="button button-primary title-action">分配设备</button></header>
+            <div class="table-scroll"><table class="area-device-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>设备编号</th><th>设备名称</th><th>设备类型</th><th>当前区域</th><th>预警</th><th>状态</th></tr></thead><tbody id="areaDeviceRows"></tbody></table><div id="areaDeviceEmpty" class="empty is-hidden">当前区域暂无设备</div></div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <div id="modal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-mask" data-close-modal></div>
+      <section class="modal-card">
+        <header class="modal-header"><h2 id="modalTitle"></h2><button class="modal-close" data-close-modal aria-label="关闭">×</button></header>
+        <form id="modalForm"><div id="modalBody" class="modal-body"></div><footer class="modal-footer"><button type="button" class="button" data-close-modal>取消</button><button type="submit" class="button button-primary">保存</button></footer></form>
+      </section>
+    </div>
+    <div id="confirm" class="modal is-hidden" role="dialog" aria-modal="true"><div class="modal-mask"></div><section class="confirm-card"><h2>操作确认</h2><p id="confirmText"></p><footer><button id="confirmCancel" class="button">取消</button><button id="confirmOk" class="button button-primary">确认</button></footer></section></div>
+    <div id="toast" class="toast is-hidden"></div>
+
+    <script src="{% static 'ynjksys/syswljk_wlpz_mock.js' %}?v=2026081201"></script>
+    <script src="{% static 'ynjksys/syswljk_wlpz_service.js' %}?v=2026081201"></script>
+    <script src="{% static 'ynjksys/syswljk_wlpz_list.js' %}?v=2026081201"></script>
+  </body>
+</html>
