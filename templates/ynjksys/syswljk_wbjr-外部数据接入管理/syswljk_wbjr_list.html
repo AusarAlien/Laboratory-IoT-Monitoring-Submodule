@@ -1,0 +1,32 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>外部数据接入管理</title>
+  <link rel="stylesheet" href="{% static 'ynjksys/syswljk_wbjr_list.css' %}?v=2026081201">
+  <script src="{% static 'common/isvar.js' %}"></script><script src="{% static 'common/isqrydata.js' %}"></script><script src="{% static 'common/issubmit.js' %}"></script>
+</head>
+<body>
+<main class="page-container">
+  <section class="metric-panel"><table class="metric-table"><thead><tr><th>外部系统</th><th>启用接入</th><th>今日同步批次</th><th>同步失败</th></tr></thead><tbody><tr><td><strong id="systemCount">0</strong><span>个</span></td><td><strong id="enabledCount">0</strong><span>个</span></td><td><strong id="syncCount">0</strong><span>批</span></td><td class="danger"><strong id="failedCount">0</strong><span>批</span></td></tr></tbody></table></section>
+  <nav class="page-tabs"><button class="page-tab is-active" data-tab="system">外部系统</button><button class="page-tab" data-tab="mapping">字段映射</button><button class="page-tab" data-tab="log">同步记录</button></nav>
+
+  <section id="systemPanel" class="tab-panel">
+    <div class="query-panel"><div class="query-grid"><label class="form-item"><span>系统名称</span><input id="systemKeyword" placeholder="系统名称或编码"></label><label class="form-item"><span>接入方式</span><select id="systemMode"><option value="">全部方式</option><option>HTTP API</option><option>数据库视图</option><option>文件交换</option><option>消息队列</option></select></label><label class="form-item"><span>使用状态</span><select id="systemStatus"><option value="">全部状态</option><option>启用</option><option>停用</option></select></label><div class="query-actions"><button class="button" data-reset="system">重置</button><button class="button primary" data-search="system">查询</button></div></div></div>
+    <section class="list-panel"><header class="panel-title"><i></i><h2>外部系统列表</h2><em id="systemSummary"></em><button class="button primary title-action" data-add="system">新增外部系统</button></header><div class="table-scroll"><table class="system-table"><thead><tr><th class="actions wide">操作</th><th>序号</th><th>系统编码</th><th>系统名称</th><th>接入方式</th><th>接口地址/数据源</th><th>同步周期</th><th>最后同步时间</th><th>最后同步结果</th><th>状态</th><th>修改时间</th></tr></thead><tbody id="systemRows"></tbody></table><div id="systemEmpty" class="empty is-hidden">暂无符合条件的外部系统</div></div><div id="systemPager" class="pagination"></div></section>
+  </section>
+
+  <section id="mappingPanel" class="tab-panel is-hidden">
+    <div class="query-panel"><div class="query-grid"><label class="form-item"><span>外部系统</span><select id="mappingSystem"><option value="">全部系统</option></select></label><label class="form-item"><span>字段名称</span><input id="mappingKeyword" placeholder="源字段或目标字段"></label><label class="form-item"><span>使用状态</span><select id="mappingStatus"><option value="">全部状态</option><option>启用</option><option>停用</option></select></label><div class="query-actions"><button class="button" data-reset="mapping">重置</button><button class="button primary" data-search="mapping">查询</button></div></div></div>
+    <section class="list-panel"><header class="panel-title"><i></i><h2>监控数据字段映射</h2><em id="mappingSummary"></em><button class="button primary title-action" data-add="mapping">新增映射</button></header><div class="table-scroll"><table class="mapping-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>外部系统</th><th>源字段</th><th>目标字段</th><th>数据类型</th><th>单位</th><th>是否必填</th><th>转换规则</th><th>状态</th><th>修改时间</th></tr></thead><tbody id="mappingRows"></tbody></table><div id="mappingEmpty" class="empty is-hidden">暂无符合条件的字段映射</div></div><div id="mappingPager" class="pagination"></div></section>
+  </section>
+
+  <section id="logPanel" class="tab-panel is-hidden">
+    <div class="query-panel"><div class="query-grid"><label class="form-item date-item"><span>同步时间</span><div class="date-range"><input id="logStart" type="date"><b>至</b><input id="logEnd" type="date"></div></label><label class="form-item"><span>外部系统</span><select id="logSystem"><option value="">全部系统</option></select></label><label class="form-item"><span>同步结果</span><select id="logStatus"><option value="">全部结果</option><option>成功</option><option>部分成功</option><option>失败</option></select></label><div class="query-actions"><button class="button" data-reset="log">重置</button><button class="button primary" data-search="log">查询</button></div></div></div>
+    <section class="list-panel"><header class="panel-title"><i></i><h2>外部数据同步记录</h2><em id="logSummary"></em></header><div class="table-scroll"><table class="log-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>开始时间</th><th>结束时间</th><th>外部系统</th><th>同步方式</th><th>获取条数</th><th>成功条数</th><th>失败条数</th><th>同步结果</th><th>批次编号</th><th>消息摘要</th></tr></thead><tbody id="logRows"></tbody></table><div id="logEmpty" class="empty is-hidden">暂无符合条件的同步记录</div></div><div id="logPager" class="pagination"></div></section>
+  </section>
+</main>
+<div id="modal" class="modal is-hidden"><div class="mask" data-close></div><section class="modal-card"><header><h2 id="modalTitle"></h2><button data-close>×</button></header><form id="modalForm"><div id="modalBody" class="modal-body"></div><footer><button type="button" class="button" data-close>取消</button><button id="modalSubmit" type="submit" class="button primary">保存</button></footer></form></section></div><div id="toast" class="toast is-hidden"></div>
+<script src="{% static 'ynjksys/syswljk_wbjr_mock.js' %}?v=2026081201"></script><script src="{% static 'ynjksys/syswljk_wbjr_service.js' %}?v=2026081201"></script><script src="{% static 'ynjksys/syswljk_wbjr_list.js' %}?v=2026081201"></script>
+</body></html>
