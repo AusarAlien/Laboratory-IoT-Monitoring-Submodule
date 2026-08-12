@@ -1,0 +1,32 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>物联状态监测</title>
+  <link rel="stylesheet" href="{% static 'ynjksys/syswljk_ztjc_list.css' %}?v=2026081201">
+  <script src="{% static 'common/isvar.js' %}"></script><script src="{% static 'common/isqrydata.js' %}"></script>
+</head>
+<body>
+<main class="page-container">
+  <section class="metric-panel"><table class="metric-table"><thead><tr><th>监测设备</th><th>正常</th><th>离线</th><th>关机</th><th>异常</th><th>未知</th></tr></thead><tbody><tr><td><strong id="metricTotal">0</strong><span>台</span></td><td class="normal"><strong id="metricNormal">0</strong><span>台</span></td><td class="offline"><strong id="metricOffline">0</strong><span>台</span></td><td><strong id="metricShutdown">0</strong><span>台</span></td><td class="abnormal"><strong id="metricAbnormal">0</strong><span>台</span></td><td><strong id="metricUnknown">0</strong><span>台</span></td></tr></tbody></table></section>
+  <nav class="page-tabs"><button class="page-tab is-active" data-tab="realtime">实时状态</button><button class="page-tab" data-tab="history">状态历史</button><button class="page-tab" data-tab="mapping">状态字典</button></nav>
+
+  <section id="realtimePanel" class="tab-panel">
+    <div class="query-panel"><div class="query-grid"><label class="form-item"><span>设备名称</span><input id="realtimeKeyword" placeholder="设备名称或编号"></label><label class="form-item"><span>设备类型</span><select id="realtimeType"><option value="">全部类型</option></select></label><label class="form-item"><span>所属区域</span><select id="realtimeArea"><option value="">全部区域</option></select></label><label class="form-item"><span>运行状态</span><select id="realtimeStatus"><option value="">全部状态</option><option>正常</option><option>离线</option><option>关机</option><option>异常</option><option>未知</option></select></label><div class="query-actions"><button class="button" data-reset="realtime">重置</button><button class="button primary" data-search="realtime">查询</button></div></div></div>
+    <section class="list-panel"><header class="panel-title"><i></i><h2>设备实时状态</h2><em id="realtimeSummary"></em><span class="refresh-time">数据时间：<b id="dataTime">--</b></span></header><div class="table-scroll"><table class="realtime-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>设备编号</th><th>设备名称</th><th>设备类型</th><th>所属区域</th><th>统一状态</th><th>设备原始状态</th><th>状态说明</th><th>最后通信时间</th><th>离线阈值</th><th>状态持续时间</th></tr></thead><tbody id="realtimeRows"></tbody></table><div id="realtimeEmpty" class="empty is-hidden">暂无符合条件的设备状态</div></div><div id="realtimePager" class="pagination"></div></section>
+  </section>
+
+  <section id="historyPanel" class="tab-panel is-hidden">
+    <div class="query-panel"><div class="query-grid"><label class="form-item date-item"><span>变更时间</span><div class="date-range"><input id="historyStart" type="date"><b>至</b><input id="historyEnd" type="date"></div></label><label class="form-item"><span>设备名称</span><select id="historyDevice"><option value="">全部设备</option></select></label><label class="form-item"><span>变更后状态</span><select id="historyStatus"><option value="">全部状态</option><option>正常</option><option>离线</option><option>关机</option><option>异常</option><option>未知</option></select></label><div class="query-actions"><button class="button" data-reset="history">重置</button><button class="button primary" data-search="history">查询</button></div></div></div>
+    <section class="list-panel"><header class="panel-title"><i></i><h2>设备状态变化记录</h2><em id="historySummary"></em></header><div class="table-scroll"><table class="history-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>变更时间</th><th>设备编号</th><th>设备名称</th><th>设备类型</th><th>所属区域</th><th>变更前状态</th><th>变更后状态</th><th>原始状态</th><th>状态原因</th></tr></thead><tbody id="historyRows"></tbody></table><div id="historyEmpty" class="empty is-hidden">暂无符合条件的状态记录</div></div><div id="historyPager" class="pagination"></div></section>
+  </section>
+
+  <section id="mappingPanel" class="tab-panel is-hidden">
+    <div class="query-panel"><div class="query-grid"><label class="form-item"><span>设备类型</span><select id="mappingType"><option value="">全部类型</option></select></label><label class="form-item"><span>原始状态</span><input id="mappingKeyword" placeholder="原始状态码或名称"></label><label class="form-item"><span>统一状态</span><select id="mappingStatus"><option value="">全部状态</option><option>正常</option><option>离线</option><option>关机</option><option>异常</option><option>未知</option></select></label><div class="query-actions"><button class="button" data-reset="mapping">重置</button><button class="button primary" data-search="mapping">查询</button></div></div></div>
+    <section class="list-panel"><header class="panel-title"><i></i><h2>设备类型状态映射</h2><em id="mappingSummary"></em></header><div class="table-scroll"><table class="mapping-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>设备类型</th><th>原始状态码</th><th>原始状态名称</th><th>统一状态</th><th>判定优先级</th><th>状态说明</th></tr></thead><tbody id="mappingRows"></tbody></table><div id="mappingEmpty" class="empty is-hidden">暂无符合条件的状态映射</div></div><div id="mappingPager" class="pagination"></div></section>
+  </section>
+</main>
+<div id="modal" class="modal is-hidden"><div class="mask" data-close></div><section class="modal-card"><header><h2 id="modalTitle">状态详情</h2><button data-close>×</button></header><div id="modalBody" class="modal-body"></div><footer><button class="button primary" data-close>关闭</button></footer></section></div><div id="toast" class="toast is-hidden"></div>
+<script src="{% static 'ynjksys/syswljk_ztjc_mock.js' %}?v=2026081201"></script><script src="{% static 'ynjksys/syswljk_ztjc_service.js' %}?v=2026081201"></script><script src="{% static 'ynjksys/syswljk_ztjc_list.js' %}?v=2026081201"></script>
+</body></html>
