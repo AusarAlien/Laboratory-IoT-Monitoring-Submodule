@@ -1,14 +1,481 @@
-(function(){"use strict";var data=MjglMock.load(),tab="live",rows=[],handler;function el(i){return document.getElementById(i)}function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}function ctrl(id){return data.controllers.find(function(x){return x.id===id})}function person(id){return data.people.find(function(x){return x.id===id})}function toast(m){el("toast").textContent=m;el("toast").classList.remove("hidden");clearTimeout(toast.t);toast.t=setTimeout(function(){el("toast").classList.add("hidden")},2000)}function tag(v){var c=/在线|正常|关闭|允许|已上传|已下发|启用/.test(v)?"ok":/异常|离线|拒绝|失败|报警|停用/.test(v)?"bad":"warn";return'<span class="tag '+c+'">'+esc(v)+'</span>'}function act(a,id,t,red){return'<button class="action '+(red?'red':'')+'" data-act="'+a+'" data-id="'+id+'">'+t+'</button>'}function persist(m){data=MjglMock.save(data);close();filter();toast(m)}
-var cfg={live:{title:"实时门禁监控",heads:["操作","序号","事件时间","门控器","所属区域","门点","门状态","实时事件","执行结果","报警状态"],statuses:["正常","设备异常","胁迫报警"],buttons:'<button class="button" data-head="refresh">刷新监控</button>'},controllers:{title:"门控器列表",heads:["操作","序号","设备编号","门控器名称","所属区域","IP地址","门数","读卡器模式","允许开门方式","运行状态","最后在线时间","配置下发","待同步任务"],statuses:["在线","离线","异常","已下发","待下发","下发失败"],buttons:'<button class="button" data-head="download">下发待办</button><button class="button primary" data-head="addController">新增门控器</button>'},permissions:{title:"门禁人员权限列表",heads:["操作","序号","人员编号","人员姓名","所属部门","门控器","授权门点","验证方式","有效时段","有效期限","权限状态","下发状态"],statuses:["启用","停用","已下发","待下发"],buttons:'<button class="button" data-head="download">下发待办</button><button class="button primary" data-head="addPermission">新增权限</button>'},records:{title:"门禁记录列表",heads:["操作","序号","发生时间","门控器","所属区域","门点","人员编号","人员姓名","开门方式","执行结果","上传状态","报警状态"],statuses:["正常","无权限","胁迫报警","已上传","待上传"],buttons:'<button class="button" data-head="upload">上传待办</button><button class="button" data-head="export">导出当前结果</button>'}};
-function metrics(){el("mControllers").textContent=data.controllers.length;el("mOnline").textContent=data.controllers.filter(function(x){return x.status==="在线"}).length;el("mPass").textContent=data.records.filter(function(x){return x.result.indexOf("允许")>=0}).length;el("mPending").textContent=data.controllers.reduce(function(n,x){return n+x.pending},0)+data.permissions.filter(function(x){return x.download==="待下发"}).length+data.records.filter(function(x){return x.upload==="待上传"}).length;el("mAlarm").textContent=data.records.filter(function(x){return x.alarm!=="正常"&&x.alarm!=="已确认"}).length}
-function filter(){var k=el("keyword").value.trim().toLowerCase(),a=el("area").value,s=el("status").value;rows=data[tab].filter(function(x){var c=x.controller?ctrl(x.controller):x,per=x.emp?person(x.emp):null,area=c&&c.area||"",txt=Object.keys(x).map(function(y){return x[y]}).join(" ")+(c?" "+c.name+" "+c.code:"")+(per?" "+per.name+" "+per.dept:"");return(!k||txt.toLowerCase().indexOf(k)>=0)&&(!a||area===a)&&(!s||x.status===s||x.alarm===s||x.download===s||x.upload===s)});render()}
-function buildCells(){return rows.map(function(x,i){var c=x.controller?ctrl(x.controller):x,p=x.emp?person(x.emp):null,v;if(tab==="live")v=[act("view",x.id,"查看")+(x.alarm!=="正常"?act("confirmLive",x.id,"确认报警"):""),i+1,x.time,c.name,c.area,x.door,tag(x.state),x.event,x.result,tag(x.alarm)];if(tab==="controllers")v=[act("editController",x.id,"修改")+act("view",x.id,"查看")+act("monitor",x.id,"监控")+(x.pending?act("downloadOne",x.id,"下发"):""),i+1,x.code,x.name,x.area,x.ip,x.doors,x.reader,x.modes,tag(x.status),x.last,tag(x.download),x.pending+" 项"];if(tab==="permissions")v=[act("editPermission",x.id,"修改")+act("togglePermission",x.id,x.status==="启用"?"停用":"启用")+act("view",x.id,"查看"),i+1,x.emp,p?p.name:"--",p?p.dept:"--",c.name,x.doors,x.mode,x.period,x.valid,tag(x.status),tag(x.download)];if(tab==="records")v=[act("view",x.id,"查看")+(x.alarm!=="正常"&&x.alarm!=="已确认"?act("confirmRecord",x.id,"确认异常"):""),i+1,x.time,c.name,c.area,x.door,x.emp||"--",p?p.name:"--",x.method,x.result,tag(x.upload),tag(x.alarm)];return'<tr>'+v.map(function(z){return'<td title="'+esc(String(z).replace(/<[^>]*>/g,""))+'">'+z+'</td>'}).join("")+'</tr>'}).join("")}
-function render(){var c=cfg[tab];el("listTitle").textContent=c.title;el("summary").textContent="（当前查询 "+rows.length+" 条）";el("headActions").innerHTML=c.buttons;el("thead").innerHTML='<tr>'+c.heads.map(function(x){return'<th>'+x+'</th>'}).join("")+'</tr>';el("tbody").innerHTML=buildCells()||'<tr><td class="empty" colspan="'+c.heads.length+'">暂无符合条件的数据</td></tr>';metrics()}function switchTab(t){tab=t;document.querySelectorAll(".tabs button").forEach(function(x){x.classList.toggle("active",x.dataset.tab===t)});el("status").innerHTML='<option value="">全部状态</option>'+cfg[t].statuses.map(function(x){return'<option>'+x+'</option>'}).join("");el("keyword").value="";el("status").value="";filter()}
-function open(title,html,fn,read){el("modalTitle").textContent=title;el("modalBody").innerHTML=html;el("submit").style.display=read?"none":"";handler=fn||null;el("modal").classList.remove("hidden")}function close(){el("modal").classList.add("hidden");handler=null}function input(id,label,v,type){return'<label class="field"><span>'+label+'</span><input id="'+id+'" type="'+(type||'text')+'" value="'+esc(v==null?'':v)+'" required></label>'}function select(id,label,a,v){return'<label class="field"><span>'+label+'</span><select id="'+id+'">'+a.map(function(x){return'<option '+(x===v?'selected':'')+'>'+x+'</option>'}).join("")+'</select></label>'}function details(a){return'<div class="detail-grid">'+a.map(function(x){return'<div class="detail '+(x[2]||'')+'"><span>'+x[0]+'</span><strong>'+esc(x[1])+'</strong></div>'}).join("")+'</div>'}
-function controllerModal(id){var x=id?ctrl(id):{code:"",name:"",area:"",ip:"",doors:1,reader:"进门读卡/出门按钮",modes:"刷卡开门",status:"离线",last:"--",download:"待下发",pending:1,superPwd:false,duressPwd:false};open(id?"修改门控器属性":"新增门控器",'<div class="form-grid">'+input("fCode","设备编号",x.code)+input("fName","门控器名称",x.name)+input("fArea","所属区域",x.area)+input("fIp","IP地址",x.ip)+input("fDoors","控制门数",x.doors,"number")+select("fReader","读卡器模式",["进门读卡/出门按钮","双向读卡"],x.reader)+select("fModes","允许开门方式",["刷卡开门","刷卡+密码","刷卡开门、刷卡+密码","刷卡开门、人脸开门","刷卡开门、胁迫密码"],x.modes)+select("fSuper","超级密码",["未配置","已配置"],x.superPwd?"已配置":"未配置")+select("fDuress","胁迫密码",["未配置","已配置"],x.duressPwd?"已配置":"未配置")+'<div class="notice">密码只维护“是否已配置”状态，前端不保存或展示超级密码、胁迫密码明文。保存后配置自动进入下发队列。</div></div>',function(){var fresh=!x.id;Object.assign(x,{id:x.id||"MC"+Date.now(),code:el("fCode").value,name:el("fName").value,area:el("fArea").value,ip:el("fIp").value,doors:Number(el("fDoors").value)||1,reader:el("fReader").value,modes:el("fModes").value,superPwd:el("fSuper").value==="已配置",duressPwd:el("fDuress").value==="已配置",download:"待下发",pending:x.pending+1});if(fresh)data.controllers.push(x);persist("门控器属性已保存，配置进入自动下发队列")})}
-function permissionModal(id){var x=id?data.permissions.find(function(y){return y.id===id}):{emp:data.people[0].id,controller:data.controllers[0].id,doors:"1号门",mode:"刷卡开门",period:"工作日 07:00-22:00",valid:"2026-08-12 至 2027-08-11",status:"启用",download:"待下发"};open(id?"修改人员门禁权限":"新增人员门禁权限",'<div class="form-grid"><label class="field"><span>人员</span><select id="fEmp">'+data.people.map(function(p){return'<option value="'+p.id+'" '+(p.id===x.emp?'selected':'')+'>'+p.id+'｜'+p.name+'</option>'}).join("")+'</select></label><label class="field"><span>门控器</span><select id="fController">'+data.controllers.map(function(c){return'<option value="'+c.id+'" '+(c.id===x.controller?'selected':'')+'>'+c.code+'｜'+c.name+'</option>'}).join("")+'</select></label>'+input("fDoors","授权门点",x.doors)+select("fMode","验证方式",["刷卡开门","刷卡+密码","人脸开门"],x.mode)+input("fPeriod","有效时段",x.period)+input("fValid","有效期限",x.valid)+select("fStatus","权限状态",["启用","停用"],x.status)+'<div class="notice">权限保存后自动进入对应门控器的下发队列；离线设备恢复在线后继续下发。</div></div>',function(){var fresh=!x.id,cid=el("fController").value;Object.assign(x,{id:x.id||"MP"+Date.now(),emp:el("fEmp").value,controller:cid,doors:el("fDoors").value,mode:el("fMode").value,period:el("fPeriod").value,valid:el("fValid").value,status:el("fStatus").value,download:"待下发"});if(fresh)data.permissions.push(x);ctrl(cid).pending++;ctrl(cid).download="待下发";persist("门禁权限已保存，等待自动下发")})}
-function view(id){var x=data[tab].find(function(y){return y.id===id}),a=Object.keys(x).filter(function(k){return k!=="superPwd"&&k!=="duressPwd"}).map(function(k){return[k,x[k]]});if(tab==="controllers")a.push(["超级密码",x.superPwd?"已配置（明文不可见）":"未配置"],["胁迫密码",x.duressPwd?"已配置（明文不可见）":"未配置"]);open("查看"+cfg[tab].title,details(a),null,true)}function monitor(id){var x=ctrl(id);open("门控器实时状态",details([["门控器",x.name],["设备编号",x.code],["运行状态",x.status],["最后在线",x.last],["配置下发",x.download],["待同步任务",x.pending+" 项"],["说明","状态来自最近一次心跳与记录上传结果；本页面不直接执行远程开门。","full"]]),null,true)}
-function download(){var done=0;data.controllers.forEach(function(c){if(c.status==="在线"&&c.pending){c.pending=0;c.download="已下发";done++}});data.permissions.forEach(function(p){if(ctrl(p.controller).status==="在线"&&p.download==="待下发")p.download="已下发"});persist("已完成 "+done+" 台在线门控器配置下发，离线任务继续保留")}
-function upload(){var done=0;data.records.forEach(function(r){if(r.upload==="待上传"&&ctrl(r.controller).status==="在线"){r.upload="已上传";done++}});persist("已上传 "+done+" 条记录，离线门控器记录继续保留")}
-function exportCsv(){var csv=cfg.records.heads.slice(1).join(",")+"\n"+rows.map(function(x){return Object.keys(x).map(function(k){return'"'+String(x[k]).replace(/"/g,'""')+'"'}).join(",")}).join("\n"),a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv"}));a.download="门禁记录.csv";a.click();URL.revokeObjectURL(a.href)}
-document.body.onclick=function(e){var t=e.target,h=t.dataset.head,a=t.dataset.act,id=t.dataset.id;if(t.dataset.close!==undefined)close();if(t.dataset.tab)switchTab(t.dataset.tab);if(h==="refresh"){filter();toast("实时监控已刷新")};if(h==="addController")controllerModal();if(h==="addPermission")permissionModal();if(h==="download")download();if(h==="upload")upload();if(h==="export")exportCsv();if(a==="view")view(id);if(a==="monitor")monitor(id);if(a==="editController")controllerModal(id);if(a==="editPermission")permissionModal(id);if(a==="downloadOne"){var c=ctrl(id);if(c.status==="在线"){c.pending=0;c.download="已下发";data.permissions.filter(function(p){return p.controller===id}).forEach(function(p){p.download="已下发"});persist("门控器配置下发完成")}else toast("门控器尚未在线，任务继续保留")};if(a==="togglePermission"){var p=data.permissions.find(function(x){return x.id===id});p.status=p.status==="启用"?"停用":"启用";p.download="待下发";ctrl(p.controller).pending++;persist("权限状态已更新，等待自动下发")};if(a==="confirmRecord"){data.records.find(function(x){return x.id===id}).alarm="已确认";persist("门禁异常已确认")};if(a==="confirmLive"){data.live.find(function(x){return x.id===id}).alarm="已确认";persist("实时报警已确认")}};el("form").onsubmit=function(e){e.preventDefault();if(handler)handler()};el("search").onclick=filter;el("reset").onclick=function(){el("keyword").value="";el("area").value="";el("status").value="";filter()};el("area").innerHTML='<option value="">全部区域</option>'+Array.from(new Set(data.controllers.map(function(x){return x.area}))).map(function(x){return'<option>'+x+'</option>'}).join("");switchTab("live")})();
+(function (global) {
+  "use strict";
+  var S = global.MjglService,
+    state = {
+      tab: "latest",
+      records: [],
+      devices: [],
+      people: [],
+      areas: [],
+      total: 0,
+      page: 1,
+      pageSize: 20,
+      loading: false,
+    };
+  function el(id) {
+    return document.getElementById(id);
+  }
+  function esc(v) {
+    return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[c];
+    });
+  }
+  function value(row, name) {
+    if (!row) return "";
+    if (row[name] !== undefined) return row[name];
+    var key = Object.keys(row).find(function (k) {
+      return k.toUpperCase() === name.toUpperCase();
+    });
+    return key ? row[key] : "";
+  }
+  function num(v) {
+    var n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+  function showError(error) {
+    var m =
+      error && error.message ? error.message : String(error || "查询失败");
+    el("toast").textContent = m;
+    el("toast").classList.remove("hidden");
+    clearTimeout(showError.t);
+    showError.t = setTimeout(function () {
+      el("toast").classList.add("hidden");
+    }, 3200);
+  }
+  function formatDateTime(v) {
+    if (!v) return null;
+    return String(v).replace("T", " ") + (String(v).length === 16 ? ":00" : "");
+  }
+  var columns = {
+    latest: [
+      ["操作", "action"],
+      ["序号", "FROWSEQ"],
+      ["发生时间", "FCHECKTIME"],
+      ["人员编号", "FBADGENUMBER"],
+      ["人员姓名", "FNAME"],
+      ["所属区域", "FAREA"],
+      ["门禁设备SN", "FSN"],
+      ["门点", "FSENSORID"],
+      ["出入方向", "FCHECKTYPE"],
+      ["验证方式", "FCODETYPE"],
+    ],
+    records: [
+      ["操作", "action"],
+      ["序号", "FROWSEQ"],
+      ["发生时间", "FCHECKTIME"],
+      ["人员编号", "FBADGENUMBER"],
+      ["人员姓名", "FNAME"],
+      ["卡号", "FCARDNO"],
+      ["实验室", "FLABNAME"],
+      ["所属区域", "FAREA"],
+      ["门禁设备SN", "FSN"],
+      ["门点", "FSENSORID"],
+      ["出入方向", "FCHECKTYPE"],
+      ["验证方式", "FCODETYPE"],
+      ["口罩标记", "FMASKFLAG"],
+      ["体温", "FTEMPERATURE"],
+      ["设备备注", "FMEMOINFO"],
+    ],
+    devices: [
+      ["操作", "action"],
+      ["序号", "seq"],
+      ["设备序列号", "FSN"],
+      ["实验室", "FLABNAME"],
+      ["所属区域", "FAREA"],
+      ["区域别名", "FAREAALIAS"],
+      ["门点数量", "FSENSORCOUNT"],
+      ["累计记录", "FRECORDCOUNT"],
+      ["最近记录时间", "FLASTCHECKTIME"],
+    ],
+    people: [
+      ["操作", "action"],
+      ["序号", "seq"],
+      ["用户ID", "FUSERID"],
+      ["人员编号", "FBADGENUMBER"],
+      ["姓名", "FNAME"],
+      ["卡号", "FCARDNO"],
+      ["默认部门ID", "FDEFAULTDEPTID"],
+      ["验证方法代码", "FVERIFICATIONMETHOD"],
+      ["权限级别", "FPRIVILEGE"],
+      ["有效状态", "FEXPIRESTATUS"],
+      ["有效期开始", "FVALIDTIMEBEGIN"],
+      ["有效期结束", "FVALIDTIMEEND"],
+      ["照片状态", "FPHOTOSTATUS"],
+    ],
+  };
+  function filters() {
+    return {
+      keyword: el("keyword").value.trim(),
+      area: el("area").value,
+      sn: el("device").value,
+      direction: el("direction").value,
+      verifyCode: el("verify").value,
+      startTime: formatDateTime(el("startTime").value),
+      endTime: formatDateTime(el("endTime").value),
+      page: state.page,
+      pageSize: state.pageSize,
+    };
+  }
+  function validate(f) {
+    if (f.startTime && f.endTime && f.startTime > f.endTime)
+      return "开始时间不能晚于结束时间";
+    return "";
+  }
+  function setLoading(on) {
+    state.loading = on;
+    el("search").disabled = on;
+    el("reset").disabled = on;
+    if (on) {
+      el("tbody").innerHTML =
+        '<tr><td class="loading" colspan="15">正在加载...</td></tr>';
+      el("pagination").innerHTML = "";
+    }
+  }
+  function recordKey(r) {
+    return [
+      value(r, "FUSERID"),
+      value(r, "FSN"),
+      value(r, "FSENSORID"),
+      value(r, "FCHECKTIME"),
+    ].join("|");
+  }
+  function renderTable() {
+    var list = state[state.tab] || [],
+      cols = columns[state.tab],
+      keyword = el("optionKeyword").value.trim().toLowerCase();
+    if (state.tab === "devices" || state.tab === "people")
+      list = list.filter(function (r) {
+        return (
+          !keyword ||
+          Object.keys(r).some(function (k) {
+            return (
+              String(r[k] || "")
+                .toLowerCase()
+                .indexOf(keyword) >= 0
+            );
+          })
+        );
+      });
+    el("thead").innerHTML =
+      "<tr>" +
+      cols
+        .map(function (c) {
+          return "<th>" + c[0] + "</th>";
+        })
+        .join("") +
+      "</tr>";
+    el("tbody").innerHTML =
+      list
+        .map(function (r, i) {
+          var sourceIndex = (state[state.tab] || []).indexOf(r);
+          return (
+            "<tr>" +
+            cols
+              .map(function (c) {
+                if (c[1] === "action")
+                  return (
+                    '<td><button class="action" data-view="' +
+                    esc(recordKey(r) || String(i)) +
+                    '" data-index="' +
+                    sourceIndex +
+                    '">查看</button></td>'
+                  );
+                if (c[1] === "seq") return "<td>" + (i + 1) + "</td>";
+                var v = value(r, c[1]);
+                if (c[1] === "FTEMPERATURE" && v !== "" && v != null)
+                  v = String(v) + " ℃";
+                return (
+                  '<td title="' +
+                  esc(v || "--") +
+                  '">' +
+                  esc(v || "--") +
+                  "</td>"
+                );
+              })
+              .join("") +
+            "</tr>"
+          );
+        })
+        .join("") ||
+      '<tr><td class="empty" colspan="' +
+        cols.length +
+        '">暂无符合条件的数据</td></tr>';
+    el("summary").textContent =
+      "（当前显示 " +
+      list.length +
+      (state.tab === "latest" || state.tab === "records"
+        ? " 条，共 " + state.total + " 条"
+        : " 条") +
+      "）";
+    renderPager();
+  }
+  function renderPager() {
+    if (state.tab !== "latest" && state.tab !== "records") {
+      el("pagination").innerHTML = "";
+      return;
+    }
+    var pages = Math.max(1, Math.ceil(state.total / state.pageSize)),
+      start = Math.max(1, state.page - 2),
+      end = Math.min(pages, start + 4);
+    start = Math.max(1, end - 4);
+    var h =
+      '<button data-page="' +
+      (state.page - 1) +
+      '" ' +
+      (state.page <= 1 ? "disabled" : "") +
+      ">‹</button>";
+    for (var i = start; i <= end; i++)
+      h +=
+        '<button data-page="' +
+        i +
+        '" class="' +
+        (i === state.page ? "current" : "") +
+        '">' +
+        i +
+        "</button>";
+    h +=
+      '<button data-page="' +
+      (state.page + 1) +
+      '" ' +
+      (state.page >= pages ? "disabled" : "") +
+      ">›</button><span>共 " +
+      pages +
+      " 页，" +
+      state.total +
+      " 条</span>";
+    el("pagination").innerHTML = h;
+  }
+  function renderMetrics(summary) {
+    var r = summary[0] || {};
+    el("mControllers").textContent = state.devices.length;
+    el("mRecords").textContent = num(value(r, "FRECORDCOUNT"));
+    el("mEntry").textContent = num(value(r, "FENTRYCOUNT"));
+    el("mExit").textContent = num(value(r, "FEXITCOUNT"));
+    el("mFace").textContent = num(value(r, "FFACECOUNT"));
+  }
+  function loadRecordData() {
+    var f = filters(),
+      msg = validate(f);
+    if (msg) {
+      showError(msg);
+      return Promise.resolve();
+    }
+    setLoading(true);
+    return Promise.all([S.loadRecords(f), S.loadSummary(f)])
+      .then(function (result) {
+        state.records = result[0];
+        state.latest = result[0];
+        state.total = state.records.length
+          ? num(value(state.records[0], "FTOTALCOUNT"))
+          : 0;
+        renderMetrics(result[1]);
+        renderTable();
+      })
+      .catch(function (e) {
+        console.error("门禁记录加载失败：", e);
+        state.records = [];
+        state.latest = [];
+        state.total = 0;
+        el("tbody").innerHTML =
+          '<tr><td class="load-error" colspan="15">数据加载失败，请稍后重试</td></tr>';
+        el("summary").textContent = "（加载失败）";
+        el("pagination").innerHTML = "";
+        showError("数据加载失败，请稍后重试");
+      })
+      .finally(function () {
+        setLoading(false);
+      });
+  }
+  function loadCurrent() {
+    if (state.tab === "latest" || state.tab === "records")
+      return loadRecordData();
+    renderTable();
+    return Promise.resolve();
+  }
+  function switchTab(tab) {
+    state.tab = tab;
+    state.page = 1;
+    document.querySelectorAll(".tabs button").forEach(function (b) {
+      b.classList.toggle("active", b.dataset.tab === tab);
+    });
+    var record = tab === "latest" || tab === "records";
+    document.querySelectorAll('[data-for="record"]').forEach(function (x) {
+      x.classList.toggle("hidden", !record);
+    });
+    document.querySelectorAll('[data-for="option"]').forEach(function (x) {
+      x.classList.toggle("hidden", record);
+    });
+    el("listTitle").textContent = {
+      latest: "最新门禁记录",
+      devices: "门禁设备列表",
+      people: "门禁人员列表",
+      records: "门禁记录列表",
+    }[tab];
+    el("headActions").innerHTML =
+      tab === "records"
+        ? '<button class="button" data-export>导出当前结果</button>'
+        : tab === "latest"
+          ? '<button class="button" data-refresh>刷新</button>'
+          : "";
+    loadCurrent();
+  }
+  function fillOptions() {
+    el("area").innerHTML =
+      '<option value="">全部区域</option>' +
+      state.areas
+        .map(function (r) {
+          var v = value(r, "FAREA"),
+            alias = value(r, "FAREAALIAS");
+          return (
+            '<option value="' +
+            esc(v) +
+            '">' +
+            esc(v + (alias && alias !== v ? "（" + alias + "）" : "")) +
+            "</option>"
+          );
+        })
+        .join("");
+    el("device").innerHTML =
+      '<option value="">全部设备</option>' +
+      state.devices
+        .map(function (r) {
+          var sn = value(r, "FSN"),
+            name = value(r, "FLABNAME") || value(r, "FAREA") || sn;
+          return (
+            '<option value="' +
+            esc(sn) +
+            '">' +
+            esc(name + "｜" + sn) +
+            "</option>"
+          );
+        })
+        .join("");
+  }
+  function detail(index) {
+    var r = (state[state.tab] || [])[Number(index)];
+    if (!r) return;
+    el("modalTitle").textContent =
+      "查看" +
+      {
+        latest: "最新门禁记录",
+        records: "门禁记录",
+        devices: "门禁设备",
+        people: "门禁人员",
+      }[state.tab];
+    el("modalBody").innerHTML =
+      '<div class="detail-grid">' +
+      columns[state.tab]
+        .filter(function (c) {
+          return c[1] !== "action" && c[1] !== "seq";
+        })
+        .map(function (c) {
+          return (
+            '<div class="detail"><span>' +
+            c[0] +
+            "</span><strong>" +
+            esc(value(r, c[1]) || "--") +
+            "</strong></div>"
+          );
+        })
+        .join("") +
+      "</div>";
+    el("modal").classList.remove("hidden");
+  }
+  function exportCsv() {
+    var cols = columns.records.filter(function (c) {
+        return c[1] !== "action";
+      }),
+      csv =
+        cols
+          .map(function (c) {
+            return c[0];
+          })
+          .join(",") +
+        "\n" +
+        state.records
+          .map(function (r) {
+            return cols
+              .map(function (c) {
+                return (
+                  '"' + String(value(r, c[1]) || "").replace(/"/g, '""') + '"'
+                );
+              })
+              .join(",");
+          })
+          .join("\n"),
+      a = document.createElement("a");
+    a.href = URL.createObjectURL(
+      new Blob(["\ufeff" + csv], { type: "text/csv" }),
+    );
+    a.download = "门禁记录.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+  function defaults() {
+    el("startTime").value = "";
+    el("endTime").value = "";
+  }
+  document.body.addEventListener("click", function (e) {
+    var t = e.target;
+    if (t.dataset.tab) switchTab(t.dataset.tab);
+    if (t.dataset.close !== undefined) el("modal").classList.add("hidden");
+    if (t.dataset.index !== undefined) detail(t.dataset.index);
+    if (t.dataset.page) {
+      state.page = Number(t.dataset.page);
+      loadRecordData();
+    }
+    if (t.dataset.refresh !== undefined) loadRecordData();
+    if (t.dataset.export !== undefined) exportCsv();
+  });
+  el("search").onclick = function () {
+    state.page = 1;
+    if (state.tab === "people")
+      S.loadPeople(el("optionKeyword").value.trim())
+        .then(function (r) {
+          state.people = r;
+          renderTable();
+        })
+        .catch(showError);
+    else loadCurrent();
+  };
+  el("reset").onclick = function () {
+    el("keyword").value = "";
+    el("area").value = "";
+    el("device").value = "";
+    el("direction").value = "";
+    el("verify").value = "";
+    el("optionKeyword").value = "";
+    defaults();
+    state.page = 1;
+    loadCurrent();
+  };
+  el("optionKeyword").oninput = renderTable;
+  function init() {
+    if (typeof global.initGlobalParams === "function")
+      global.initGlobalParams();
+    defaults();
+    setLoading(true);
+    Promise.all([S.loadAreas(), S.loadDevices(), S.loadPeople("")])
+      .then(function (r) {
+        state.areas = r[0];
+        state.devices = r[1];
+        state.people = r[2];
+        fillOptions();
+        return loadRecordData();
+      })
+      .catch(function (e) {
+        console.error("门禁页面初始化失败：", e);
+        setLoading(false);
+        el("tbody").innerHTML =
+          '<tr><td class="load-error" colspan="15">数据加载失败，请稍后重试</td></tr>';
+        showError("数据加载失败，请稍后重试");
+      });
+  }
+  global.addEventListener("load", init);
+})(window);
