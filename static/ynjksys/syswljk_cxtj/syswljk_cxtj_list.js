@@ -172,6 +172,21 @@
     el("queryEmpty").classList.toggle("is-hidden", rows.length > 0);
     pager();
   }
+  function currentPageRows(result) {
+    var list = Array.isArray(result) ? result : [],
+      start = (page - 1) * PAGE + 1,
+      end = page * PAGE,
+      numbered = list.filter(function (r) {
+        var rowNo = Number(r.rowNo);
+        return Number.isFinite(rowNo) && rowNo >= start && rowNo <= end;
+      });
+    /*
+     * Registered SQL normally returns the requested page. Some deployed query
+     * definitions can still return the complete result set. Prefer the global
+     * row number when present, then cap the rendered page as a safe fallback.
+     */
+    return (numbered.length ? numbered : list).slice(0, PAGE);
+  }
   function pager() {
     var pages = Math.ceil(total / PAGE),
       h =
@@ -281,8 +296,9 @@
     var p = params("query");
     Promise.all([S.loadRows(p), S.loadSummary(p), S.loadTrend(p)])
       .then(function (v) {
-        rows = v[0];
-        total = rows.length ? rows[0].total : v[1].total;
+        var resultRows = Array.isArray(v[0]) ? v[0] : [];
+        total = resultRows.length ? resultRows[0].total : v[1].total;
+        rows = currentPageRows(resultRows);
         renderTable();
         renderMetrics(v[1]);
         renderCharts(v[2], v[1]);
