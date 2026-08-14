@@ -76,8 +76,10 @@
     return {
       id: String(field(r, "FDEVICEID") || field(r, "FDEVICEIP")),
       ip: String(field(r, "FDEVICEIP") || ""),
+      code: String(field(r, "FDEVICEIP") || ""),
       name: String(field(r, "FDEVICENAME") || field(r, "FDEVICEIP") || ""),
       dept: String(field(r, "FDEPTNO") || "未设置"),
+      area: String(field(r, "FDEPTNO") || "未设置"),
       hiino: String(field(r, "FHIINO") || ""),
       depotSeq: String(field(r, "FDEPOTSEQ") || ""),
       type: String(field(r, "FDEVICETYPE") || "温湿度监测设备"),
@@ -94,6 +96,7 @@
       deviceIp: String(field(r, "FDEVICEIP") || ""),
       deviceName: String(field(r, "FDEVICENAME") || field(r, "FDEVICEIP") || ""),
       dept: String(field(r, "FDEPTNO") || "未设置"),
+      deviceType: "温湿度监测设备",
       metricCode: String(field(r, "FMETRICCODE") || ""),
       metricName: String(field(r, "FMETRICNAME") || ""),
       value: number(field(r, "FVALUE")),

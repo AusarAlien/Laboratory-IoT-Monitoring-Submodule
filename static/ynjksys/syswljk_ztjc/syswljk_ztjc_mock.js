@@ -72,20 +72,6 @@
       duration: "1天 2小时",
     },
     {
-      id: "D-006",
-      code: "IOT-WT-001",
-      name: "废物处置间水浸探测器",
-      type: "水浸监测设备",
-      area: "废物处置间",
-      status: "关机",
-      rawCode: "POWER_OFF",
-      rawName: "设备关机",
-      description: "设备主动上报关机状态",
-      lastTime: "2026-08-12 10:28:10",
-      timeout: 300,
-      duration: "1小时 24分钟",
-    },
-    {
       id: "D-007",
       code: "IOT-GAS-001",
       name: "气瓶间气体监测器",
@@ -155,24 +141,6 @@
       priority: 50,
       description: "非授权强制开门",
     },
-    {
-      id: "SM-07",
-      type: "水浸监测设备",
-      rawCode: "POWER_OFF",
-      rawName: "设备关机",
-      status: "关机",
-      priority: 40,
-      description: "设备主动上报关机",
-    },
-    {
-      id: "SM-08",
-      type: "水浸监测设备",
-      rawCode: "WATER_ALARM",
-      rawName: "水浸报警",
-      status: "异常",
-      priority: 50,
-      description: "探头检测到水浸",
-    },
   ];
   var history = [
     {
@@ -192,15 +160,6 @@
       after: "异常",
       raw: "HUMIDITY_HIGH / 湿度超限",
       reason: "湿度连续3次超过65%RH",
-    },
-    {
-      id: "H-03",
-      time: "2026-08-12 10:28:10",
-      deviceId: "D-006",
-      before: "正常",
-      after: "关机",
-      raw: "POWER_OFF / 设备关机",
-      reason: "设备主动上报关机",
     },
     {
       id: "H-04",
