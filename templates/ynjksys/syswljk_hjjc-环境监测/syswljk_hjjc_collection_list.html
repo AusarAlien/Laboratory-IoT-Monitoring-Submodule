@@ -8,6 +8,8 @@
     <title>环境条件采集</title>
     <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_common.css' %}?v=2026081202">
     <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_collection_list.css' %}?v=2026081202">
+    <script src="{% static 'common/isvar.js' %}"></script>
+    <script src="{% static 'common/isqrydata.js' %}"></script>
     <script src="{% static 'lib/echarts/echarts.min.js' %}"></script>
 </head>
 
@@ -38,18 +40,16 @@
         <div class="query-panel">
             <div class="query-grid"><label class="form-item"><span>所属科室</span><select id="qDept">
                         <option value="">全部科室</option>
-                    </select></label><label class="form-item"><span>对象类型</span><select id="qType">
-                        <option value="">全部类型</option>
                     </select></label><label class="form-item"><span>监测对象</span><select id="qObject">
                         <option value="">全部对象</option>
-                    </select></label><label class="form-item"><span>环境项目</span><select id="qProject"></select></label>
+                    </select></label><label class="form-item"><span>环境项目</span><select id="qProject"><option value="TEMP">温度</option><option value="HUM">湿度</option></select></label><label class="form-item"><span>数据状态</span><select id="qStatus"><option value="">全部状态</option><option>正常</option><option>超限</option><option>无效</option></select></label>
                 <div class="query-actions"><button class="button" id="btnReset">重置</button><button
                         class="button primary" id="btnSearch">查询</button></div>
             </div>
         </div>
         <section class="chart-card" style="margin-bottom:14px">
             <header><i></i>
-                <h2 id="trendTitle">环境条件趋势</h2><em style="margin-left:auto;color:#8793a3">数据来源：设备自动采集</em>
+                <h2 id="trendTitle">温度趋势（℃）</h2>
             </header>
             <div id="trendChart" class="chart"></div>
         </section>
@@ -66,13 +66,12 @@
                             <th>采集时间</th>
                             <th>所属科室</th>
                             <th>监测对象</th>
-                            <th>对象类型</th>
                             <th>设备编号</th>
                             <th>环境项目</th>
                             <th>采集值</th>
                             <th>单位</th>
                             <th>数据状态</th>
-                            <th>采集方式</th>
+                            <th>标准范围</th>
                         </tr>
                     </thead>
                     <tbody id="resultBody"></tbody>
@@ -92,9 +91,8 @@
             <footer><button class="button primary" data-close>关闭</button></footer>
         </section>
     </div>
-    <script src="{% static 'ynjksys/syswljk_hjjc_mock.js' %}?v=2026081202"></script>
-    <script src="{% static 'ynjksys/syswljk_hjjc_service.js' %}?v=2026081202"></script>
-    <script src="{% static 'ynjksys/syswljk_hjjc_collection_list.js' %}?v=2026081202"></script>
+    <script src="{% static 'ynjksys/syswljk_wsd_service.js' %}?v=2026081302"></script>
+    <script src="{% static 'ynjksys/syswljk_hjjc_collection_list.js' %}?v=2026081301"></script>
 </body>
 
 </html>

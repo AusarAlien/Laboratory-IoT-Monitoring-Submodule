@@ -1,7 +1,250 @@
-(function(){"use strict";var S=window.SyswljkEnvService,data,rows=[],chart;function el(id){return document.getElementById(id)}function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}function add(sel,items,key,text){items.forEach(function(x){var o=document.createElement("option");o.value=x[key];o.textContent=x[text];sel.appendChild(o)})}function object(id){return data.objects.find(function(x){return x.id===id})}function project(id){return data.projects.find(function(x){return x.id===id})}
-function initOptions(){add(el("qDept"),Array.from(new Set(data.objects.map(function(x){return x.department}))).map(function(x){return{v:x,t:x}}),"v","t");add(el("qType"),Array.from(new Set(data.objects.map(function(x){return x.type}))).map(function(x){return{v:x,t:x}}),"v","t");add(el("qObject"),data.objects,"id","name");add(el("qProject"),data.projects.filter(function(x){return x.status==="启用"}),"id","name")}
-function latest(){var seen={},out=[];data.records.slice().sort(function(a,b){return b.time.localeCompare(a.time)}).forEach(function(r){var k=r.objectId+"|"+r.projectId;if(!seen[k]){seen[k]=1;out.push(r)}});return out}function filter(){var dept=el("qDept").value,type=el("qType").value,obj=el("qObject").value,pid=el("qProject").value;rows=latest().filter(function(r){var o=object(r.objectId);return(!dept||o.department===dept)&&(!type||o.type===type)&&(!obj||o.id===obj)&&(!pid||r.projectId===pid)});render();renderChart(pid,obj,dept,type)}
-function render(){var normal=rows.filter(function(x){return x.status==="正常"}).length;el("mObjects").textContent=data.objects.length;el("mDevices").textContent=new Set(data.objects.map(function(x){return x.deviceCode})).size;el("mToday").textContent=data.records.filter(function(x){return x.time.slice(0,10)==="2026-08-12"}).length;el("mNormal").textContent=normal;el("mAbnormal").textContent=rows.length-normal;el("resultCount").textContent="（当前查询 "+rows.length+" 条）";el("resultBody").innerHTML=rows.map(function(r,i){var o=object(r.objectId),p=project(r.projectId);return'<tr><td><button class="action" data-view="'+r.id+'">查看</button></td><td>'+(i+1)+'</td><td>'+esc(r.time)+'</td><td>'+esc(o.department)+'</td><td>'+esc(o.name)+'</td><td>'+esc(o.type)+'</td><td>'+esc(o.deviceCode)+'</td><td>'+esc(p.name)+'</td><td>'+esc(r.value)+'</td><td>'+esc(p.unit)+'</td><td><span class="tag '+(r.status==="正常"?'tag-success':'tag-danger')+'">'+esc(r.status)+'</span></td><td>'+esc(r.mode)+'</td></tr>'}).join("")||'<tr><td colspan="12" class="empty">暂无符合条件的采集结果</td></tr>'}
-function renderChart(pid,obj,dept,type){var p=project(pid)||data.projects[0],objects=data.objects.filter(function(o){return(!obj||o.id===obj)&&(!dept||o.department===dept)&&(!type||o.type===type)}),rs=data.records.filter(function(r){return r.projectId===p.id&&objects.some(function(o){return o.id===r.objectId})}).sort(function(a,b){return a.time.localeCompare(b.time)}),times=Array.from(new Set(rs.map(function(r){return r.time.slice(5,16)})));el("trendTitle").textContent=p.name+"趋势（"+p.unit+"）";if(!chart)chart=echarts.init(el("trendChart"));chart.setOption({tooltip:{trigger:"axis",valueFormatter:function(v){return v+" "+p.unit}},legend:{top:10,type:"scroll"},grid:{left:72,right:28,top:62,bottom:62},xAxis:{type:"category",name:"采集时间",nameLocation:"middle",nameGap:44,data:times,axisLabel:{rotate:28}},yAxis:{type:"value",name:p.name+"（"+p.unit+"）"},series:objects.map(function(o){var m={};rs.filter(function(r){return r.objectId===o.id}).forEach(function(r){m[r.time.slice(5,16)]=r.value});return{name:o.name,type:"line",smooth:true,connectNulls:true,symbol:"circle",symbolSize:5,data:times.map(function(t){return m[t]==null?null:m[t]})}})},true)}
-function view(id){var r=data.records.find(function(x){return x.id===id}),o=object(r.objectId),p=project(r.projectId),items=[["采集时间",r.time],["所属科室",o.department],["监测对象",o.name],["对象类型",o.type],["采集设备",o.deviceCode],["环境项目",p.name],["采集结果",r.value+" "+p.unit],["数据状态",r.status],["采集方式",r.mode],["数据来源",r.source]];el("detailContent").innerHTML=items.map(function(x){return'<div class="detail-item"><span>'+x[0]+'</span><strong>'+esc(x[1])+'</strong></div>'}).join("");el("modal").classList.remove("is-hidden")}
-document.body.onclick=function(e){if(e.target.dataset.close!==undefined)el("modal").classList.add("is-hidden");if(e.target.dataset.view)view(e.target.dataset.view)};el("btnSearch").onclick=filter;el("btnReset").onclick=function(){document.querySelectorAll(".query-panel select").forEach(function(x){x.selectedIndex=0});filter()};el("qProject").onchange=filter;window.onresize=function(){if(chart)chart.resize()};S.loadAll().then(function(v){data=v;initOptions();filter()})})();
+(function (global) {
+  "use strict";
+  var S = global.SyswljkWsdService,
+    devices = [],
+    rows = [],
+    chart;
+  function el(id) {
+    return document.getElementById(id);
+  }
+  function esc(v) {
+    return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[c];
+    });
+  }
+  function toast(message) {
+    var old = document.querySelector(".wsd-message");
+    if (old) old.remove();
+    var n = document.createElement("div");
+    n.className = "toast wsd-message";
+    n.textContent = message;
+    document.body.appendChild(n);
+    setTimeout(function () {
+      n.remove();
+    }, 2200);
+  }
+  function params() {
+    return {
+      dept: el("qDept").value,
+      device: el("qObject").value,
+      metric: el("qProject").value,
+      status: el("qStatus").value,
+    };
+  }
+  function addOptions(id, list, value, text) {
+    list.forEach(function (x) {
+      var o = document.createElement("option");
+      o.value = x[value];
+      o.textContent = x[text];
+      el(id).appendChild(o);
+    });
+  }
+  function initOptions() {
+    var depts = [];
+    devices.forEach(function (d) {
+      if (depts.indexOf(d.dept) < 0) depts.push(d.dept);
+    });
+    addOptions(
+      "qDept",
+      depts.sort().map(function (x) {
+        return { v: x, t: x };
+      }),
+      "v",
+      "t",
+    );
+    addOptions("qObject", devices, "id", "name");
+  }
+  function range(r) {
+    return (
+      (r.lower == null ? "--" : r.lower) +
+      " ～ " +
+      (r.upper == null ? "--" : r.upper) +
+      " " +
+      r.unit
+    );
+  }
+  function tag(status) {
+    return (
+      '<span class="tag ' +
+      (status === "正常"
+        ? "tag-success"
+        : status === "超限"
+          ? "tag-danger"
+          : "") +
+      '">' +
+      esc(status) +
+      "</span>"
+    );
+  }
+  function renderTable() {
+    el("resultCount").textContent = "（当前查询 " + rows.length + " 条）";
+    el("resultBody").innerHTML =
+      rows
+        .map(function (r, i) {
+          return (
+            '<tr><td><button class="action" data-view="' +
+            esc(r.id) +
+            '">查看</button></td><td>' +
+            (i + 1) +
+            "</td><td>" +
+            esc(r.time) +
+            "</td><td>" +
+            esc(r.dept) +
+            "</td><td>" +
+            esc(r.deviceName) +
+            "</td><td>" +
+            esc(r.deviceIp) +
+            "</td><td>" +
+            esc(r.metricName) +
+            "</td><td>" +
+            (r.value == null ? "--" : r.value) +
+            "</td><td>" +
+            esc(r.unit) +
+            "</td><td>" +
+            tag(r.status) +
+            "</td><td>" +
+            esc(range(r)) +
+            "</td></tr>"
+          );
+        })
+        .join("") ||
+      '<tr><td colspan="11" class="empty">暂无符合条件的采集结果</td></tr>';
+  }
+  function renderChart(trend) {
+    var metric = el("qProject").value,
+      name = metric === "HUM" ? "湿度" : "温度",
+      unit = metric === "HUM" ? "%RH" : "℃",
+      groups = {};
+    trend.forEach(function (r) {
+      (groups[r.deviceId] = groups[r.deviceId] || {
+        name: r.deviceName,
+        data: [],
+      }).data.push([r.time.replace(" ", "T"), r.value]);
+    });
+    el("trendTitle").textContent = name + "趋势（" + unit + "）";
+    if (!chart) chart = global.echarts.init(el("trendChart"));
+    chart.clear();
+    chart.setOption(
+      {
+        tooltip: {
+          trigger: "axis",
+          valueFormatter: function (v) {
+            return v == null ? "--" : v + " " + unit;
+          },
+        },
+        legend: { top: 10, type: "scroll" },
+        grid: { left: 78, right: 28, top: 58, bottom: 66 },
+        xAxis: {
+          type: "time",
+          name: "采集时间",
+          nameLocation: "middle",
+          nameGap: 48,
+        },
+        yAxis: {
+          type: "value",
+          name: name + "（" + unit + "）",
+          nameLocation: "middle",
+          nameGap: 55,
+        },
+        series: Object.keys(groups).map(function (k) {
+          return {
+            name: groups[k].name,
+            type: "line",
+            smooth: true,
+            showSymbol: true,
+            symbolSize: 5,
+            data: groups[k].data,
+          };
+        }),
+      },
+      true,
+    );
+  }
+  function renderMetrics(summary) {
+    el("mObjects").textContent = devices.length;
+    el("mDevices").textContent = devices.length;
+    el("mToday").textContent = summary.today;
+    el("mNormal").textContent = rows.filter(function (r) {
+      return r.status === "正常";
+    }).length;
+    el("mAbnormal").textContent = rows.filter(function (r) {
+      return r.status === "超限";
+    }).length;
+  }
+  function load() {
+    var p = params();
+    Promise.all([S.loadLatest(p), S.loadTrend(p), S.loadSummary(p)])
+      .then(function (v) {
+        rows = v[0];
+        renderTable();
+        renderChart(v[1]);
+        renderMetrics(v[2]);
+      })
+      .catch(function () {
+        rows = [];
+        renderTable();
+        toast("数据加载失败，请稍后重试");
+      });
+  }
+  function detail(id) {
+    var r = rows.find(function (x) {
+      return x.id === id;
+    });
+    if (!r) return;
+    var items = [
+      ["采集时间", r.time],
+      ["所属科室", r.dept],
+      ["监测对象", r.deviceName],
+      ["设备编号", r.deviceIp],
+      ["环境项目", r.metricName],
+      ["采集结果", (r.value == null ? "--" : r.value) + " " + r.unit],
+      ["标准范围", range(r)],
+      ["数据状态", r.status],
+      ["异常说明", r.alarm || "--"],
+    ];
+    el("detailContent").innerHTML = items
+      .map(function (x) {
+        return (
+          '<div class="detail-item"><span>' +
+          x[0] +
+          "</span><strong>" +
+          esc(x[1]) +
+          "</strong></div>"
+        );
+      })
+      .join("");
+    el("modal").classList.remove("is-hidden");
+  }
+  document.body.onclick = function (e) {
+    if (e.target.dataset.close !== undefined)
+      el("modal").classList.add("is-hidden");
+    if (e.target.dataset.view) detail(e.target.dataset.view);
+  };
+  el("btnSearch").onclick = load;
+  el("qProject").onchange = load;
+  el("btnReset").onclick = function () {
+    el("qDept").value = "";
+    el("qObject").value = "";
+    el("qProject").value = "TEMP";
+    el("qStatus").value = "";
+    load();
+  };
+  global.addEventListener("resize", function () {
+    if (chart) chart.resize();
+  });
+  S.loadDevices()
+    .then(function (v) {
+      devices = v;
+      initOptions();
+      load();
+    })
+    .catch(function () {
+      toast("数据加载失败，请稍后重试");
+    });
+})(window);
