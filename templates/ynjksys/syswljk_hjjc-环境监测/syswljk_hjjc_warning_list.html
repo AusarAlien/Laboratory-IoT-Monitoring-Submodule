@@ -7,9 +7,10 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>智能预警</title>
     <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_common.css' %}?v=2026081205">
-    <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_warning_list.css' %}?v=2026081403">
+    <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_warning_list.css' %}?v=2026081801">
     <script src="{% static 'common/isvar.js' %}"></script>
     <script src="{% static 'common/isqrydata.js' %}"></script>
+    <script src="{% static 'common/issubmit.js' %}"></script>
     <script src="{% static 'ynjksys/syswljk_query_guard.js' %}?v=2026081701"></script>
 </head>
 
@@ -24,6 +25,7 @@
                         <th>环境项目</th>
                         <th>待确认</th>
                         <th>已处理</th>
+                        <th>已失效</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -33,6 +35,7 @@
                         <td><strong id="mProjects">0</strong><span>项</span></td>
                         <td class="danger"><strong id="mPending">0</strong><span>条</span></td>
                         <td class="success"><strong id="mHandled">0</strong><span>条</span></td>
+                        <td><strong id="mInvalid">0</strong><span>条</span></td>
                     </tr>
                 </tbody>
             </table>
@@ -93,14 +96,14 @@
             </header>
             <form id="form">
                 <div class="modal-body" id="modalBody"></div>
-                <footer><button type="button" class="button primary" data-close>关闭</button></footer>
+                <footer id="modalFooter"><button type="button" class="button primary" data-close>关闭</button></footer>
             </form>
         </section>
     </div>
     <div id="toast" class="toast is-hidden"></div>
     <!-- Mock 脚本保留在代码库中作为显式降级方案，正式页面不加载。 -->
-    <script src="{% static 'ynjksys/syswljk_jcyj_service.js' %}?v=2026081701"></script>
-    <script src="{% static 'ynjksys/syswljk_hjjc_warning_list.js' %}?v=2026081403"></script>
+    <script src="{% static 'ynjksys/syswljk_jcyj_service.js' %}?v=2026081801"></script>
+    <script src="{% static 'ynjksys/syswljk_hjjc_warning_list.js' %}?v=2026081801"></script>
 </body>
 
 </html>

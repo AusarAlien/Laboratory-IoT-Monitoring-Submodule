@@ -9,6 +9,7 @@
       standards: "ynjksys_hjjc_wsd_bz01q",
       rules: "ynjksys_wljk_jcyj_gz01q",
       saveRule: "ynjksys_wljk_jcyj_gz01s",
+      saveAlarm: "ynjksys_wljk_jcyj_cl01s",
     },
   };
 
@@ -94,6 +95,12 @@
       status: String(field(row, "FSTATUS") || "未知"),
       valid: String(field(row, "FIFVALID") || ""),
       dealt: String(field(row, "FIFDEAL") || ""),
+      dealLogId: String(field(row, "FDEALLOGID") || ""),
+      dealAction: String(field(row, "FDEALACTION") || ""),
+      dealResult: String(field(row, "FDEALRESULT") || ""),
+      recovered: String(field(row, "FRECOVERED") || "") === "1",
+      dealOperator: String(field(row, "FDEALEMPID") || ""),
+      dealTime: String(field(row, "FDEALTIME") || ""),
       time: String(field(row, "FALARMTIME") || ""),
     };
   }
@@ -201,6 +208,34 @@
     return query(CONFIG.qids.alarms, params(filters)).then(function (rows) { return rows.map(mapAlarm); });
   }
 
+  function newId() {
+    if (global.crypto && typeof global.crypto.randomUUID === "function") return global.crypto.randomUUID().replace(/-/g, "").toUpperCase();
+    return (Date.now().toString(16) + Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2)).replace(/\./g, "").slice(0, 32).padEnd(32, "0").toUpperCase();
+  }
+
+  function saveAlarm(action, alarm) {
+    return new Promise(function (resolve, reject) {
+      if (!global.issubmit || typeof global.issubmit.submit !== "function") { reject(new Error("数据保存服务暂不可用")); return; }
+      var item = {
+        "数据状态": "新增",
+        FLOGID: newId(),
+        FMAGUID: alarm.id,
+        FACTION: action,
+        FRESULT: alarm.result,
+        FRECOVERED: alarm.recovered ? "1" : "0",
+      };
+      global.issubmit.submit({
+        qid: CONFIG.qids.saveAlarm,
+        data: [item],
+        successCallback: function (result) {
+          if (result && (String(result.success).toLowerCase() === "false" || /失败|重试/.test(String(result.message || "")))) { reject(new Error(result.message || "预警处置失败")); return; }
+          resolve(result || {});
+        },
+        errorCallback: reject,
+      });
+    });
+  }
+
   /* Mock 降级代码保留但不启用：
      return Promise.resolve(global.SyswljkWarningMock.load());
      正式查询失败时不自动切换模拟数据。 */
@@ -222,5 +257,6 @@
       });
     },
     saveRule: saveRule,
+    saveAlarm: saveAlarm,
   };
 })(window);

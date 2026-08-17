@@ -3,7 +3,7 @@
 }
 
 .alarm-table th:nth-child(1) {
-    width: 100px
+    width: 155px
 }
 
 .alarm-table th:nth-child(2) {
@@ -41,4 +41,27 @@
 
 .alarm-table th:nth-child(10) {
     width: 300px
+}
+
+.action.danger {
+    color: var(--danger)
+}
+
+.deal-summary {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border: 1px solid #dfe6ef;
+    border-radius: 5px;
+    background: #f7f9fc;
+    color: #596578
+}
+
+.deal-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 20px
+}
+
+.deal-form .field.full {
+    grid-column: 1/-1
 }

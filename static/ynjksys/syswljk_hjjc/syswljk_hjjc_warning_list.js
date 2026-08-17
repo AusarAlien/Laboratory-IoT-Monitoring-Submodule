@@ -5,6 +5,9 @@
   var alarms = [];
   var rows = [];
   var page = 1;
+  var optionsReady = false;
+  var activeAlarmId = "";
+  var saving = false;
 
   function el(id) { return document.getElementById(id); }
   function esc(v) {
@@ -53,6 +56,7 @@
     el("mProjects").textContent = unique(alarms, "metricCode").length;
     el("mPending").textContent = alarms.filter(function (x) { return x.status === "待确认"; }).length;
     el("mHandled").textContent = alarms.filter(function (x) { return x.status === "已处理"; }).length;
+    el("mInvalid").textContent = alarms.filter(function (x) { return x.status === "已失效"; }).length;
   }
 
   function filter() {
@@ -84,7 +88,9 @@
     var current = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
     el("summary").textContent = "（当前查询 " + rows.length + " 条）";
     el("rows").innerHTML = current.map(function (alarm, index) {
-      return '<tr><td><button class="action" data-view="' + esc(alarm.id) + '">查看</button></td><td>' + ((page - 1) * PAGE_SIZE + index + 1) + "</td><td>" + esc(alarm.time) + "</td><td>" + esc(alarm.dept) + "</td><td title=\"" + esc(alarm.location) + "\">" + esc(alarm.location) + "</td><td>" + esc(alarm.metric) + "</td><td>" + esc(displayValue(alarm)) + "</td><td>" + tag(alarm.level) + "</td><td>" + tag(alarm.status) + "</td><td title=\"" + esc(alarm.condition) + "\">" + esc(alarm.condition) + "</td></tr>";
+      var actions = '<button class="action" data-view="' + esc(alarm.id) + '">查看</button>';
+      if (alarm.status === "待确认") actions += '<button class="action" data-deal="' + esc(alarm.id) + '">处置</button>';
+      return "<tr><td>" + actions + "</td><td>" + ((page - 1) * PAGE_SIZE + index + 1) + "</td><td>" + esc(alarm.time) + "</td><td>" + esc(alarm.dept) + "</td><td title=\"" + esc(alarm.location) + "\">" + esc(alarm.location) + "</td><td>" + esc(alarm.metric) + "</td><td>" + esc(displayValue(alarm)) + "</td><td>" + tag(alarm.level) + "</td><td>" + tag(alarm.status) + "</td><td title=\"" + esc(alarm.condition) + "\">" + esc(alarm.condition) + "</td></tr>";
     }).join("") || '<tr><td colspan="10" class="empty">暂无符合条件的智能预警</td></tr>';
     renderPager();
     metrics();
@@ -99,17 +105,64 @@
       ["环境项目", alarm.metric], ["监测值", displayValue(alarm)], ["预警等级", alarm.level],
       ["处置状态", alarm.status], ["预警内容", alarm.condition, "full"]
     ];
+    if (alarm.dealLogId) {
+      items.push(["处置操作", alarm.dealAction === "INVALID" ? "标记失效" : "完成处置"]);
+      items.push(["是否恢复", alarm.recovered ? "是" : "否"]);
+      items.push(["处置人员", alarm.dealOperator || "--"]);
+      items.push(["处置时间", alarm.dealTime || "--"]);
+      items.push(["处置结果", alarm.dealResult || "--", "full"]);
+    }
     el("modalTitle").textContent = "查看环境预警";
     el("modalBody").innerHTML = '<div class="detail-grid">' + items.map(function (item) {
       return '<div class="detail-item ' + (item[2] || "") + '"><span>' + esc(item[0]) + "</span><strong>" + esc(item[1] || "--") + "</strong></div>";
     }).join("") + "</div>";
+    el("modalFooter").innerHTML = (alarm.status === "待确认" ? '<button type="button" class="button primary" data-deal="' + esc(alarm.id) + '">处置预警</button>' : "") + '<button type="button" class="button" data-close>关闭</button>';
     el("modal").classList.remove("is-hidden");
   }
 
+  function openDeal(id) {
+    var alarm = alarms.find(function (item) { return item.id === id; });
+    if (!alarm || alarm.status !== "待确认") { toast("该预警状态已变化，请刷新后重试"); return; }
+    activeAlarmId = id;
+    el("modalTitle").textContent = "处置环境预警";
+    el("modalBody").innerHTML = '<div class="deal-summary">' + esc(alarm.location) + " · " + esc(alarm.metric) + " · " + esc(alarm.condition) + '</div><div class="deal-form"><label class="field"><span class="required">处置操作</span><select id="dealAction"><option value="HANDLE">完成处置</option><option value="INVALID">标记失效</option></select></label><label class="field"><span>监测状态已恢复</span><select id="dealRecovered"><option value="1">是</option><option value="0">否</option></select></label><label class="field full"><span class="required">处置结果/原因</span><textarea id="dealResult" maxlength="2000" placeholder="请填写现场检查、调整措施、处理结果或失效原因"></textarea></label></div>';
+    el("dealAction").onchange = function () { var invalid = this.value === "INVALID"; el("dealRecovered").value = invalid ? "0" : "1"; el("dealRecovered").disabled = invalid; };
+    el("modalFooter").innerHTML = '<button type="button" class="button" data-close>取消</button><button type="button" class="button primary" data-submit-deal>提交处置</button>';
+    el("modal").classList.remove("is-hidden");
+  }
+
+  function reload() {
+    return S.loadAlarms({ alarmType: "2" }).then(function (result) {
+      alarms = result;
+      if (!optionsReady) { initOptions(); optionsReady = true; }
+      filter();
+    });
+  }
+
+  function submitDeal() {
+    if (saving) return;
+    var action = el("dealAction").value;
+    var result = el("dealResult").value.trim();
+    if (!result) { toast(action === "INVALID" ? "请填写失效原因" : "请填写处置结果"); return; }
+    saving = true;
+    var button = document.querySelector("[data-submit-deal]");
+    if (button) { button.disabled = true; button.textContent = "提交中..."; }
+    S.saveAlarm(action, { id: activeAlarmId, result: result, recovered: action === "HANDLE" && el("dealRecovered").value === "1" })
+      .then(function () {
+        el("modal").classList.add("is-hidden");
+        toast(action === "INVALID" ? "预警已标记失效" : "预警处置已完成");
+        return reload();
+      })
+      .catch(function (error) { toast(error && error.message ? error.message : "预警处置失败，请稍后重试"); })
+      .then(function () { saving = false; }, function () { saving = false; });
+  }
+
   document.body.onclick = function (event) {
-    var node = event.target;
+    var node = event.target.closest ? (event.target.closest("button") || event.target) : event.target;
     if (node.dataset.close !== undefined) { el("modal").classList.add("is-hidden"); return; }
     if (node.dataset.view) { open(node.dataset.view); return; }
+    if (node.dataset.deal) { openDeal(node.dataset.deal); return; }
+    if (node.dataset.submitDeal !== undefined) { submitDeal(); return; }
     if (node.dataset.page) { page = Number(node.dataset.page); render(); return; }
     if (node.dataset.pageDir) {
       page = Math.max(1, Math.min(Math.ceil(rows.length / PAGE_SIZE) || 1, page + Number(node.dataset.pageDir)));
@@ -122,9 +175,5 @@
     filter();
   };
 
-  S.loadAlarms({ alarmType: "2" }).then(function (result) {
-    alarms = result;
-    initOptions();
-    filter();
-  }).catch(function () { toast("数据加载失败，请稍后重试"); });
+  reload().catch(function () { toast("数据加载失败，请稍后重试"); });
 })();

@@ -33,6 +33,15 @@ begin
         from scoped_devices d
     ) x
    where x.fnodecount=1 and x.rn=1
+), latest_deal as (
+  select x.*
+    from (
+      select l.*,
+             row_number() over(partition by trim(l.fmaguid) order by l.fopdt desc,l.fguid desc) rn
+        from hii.ib_tbs_iotalarmdeallog l
+       where (nvl(?,0)=0 or l.fhiino=?)
+    ) x
+   where x.rn=1
 ), alarm_data as (
   select trim(a.fmaguid) falarmid,
          trim(a.falarmtype) falarmtypecode,
@@ -70,6 +79,12 @@ begin
          end fstatus,
          trim(a.fifvalid) fifvalid,
          trim(a.fifdeal) fifdeal,
+         trim(l.fguid) fdeallogid,
+         trim(l.faction) fdealaction,
+         trim(l.fresult) fdealresult,
+         trim(l.frecovered) frecovered,
+         trim(l.fempid) fdealempid,
+         l.fopdt fdealdt,
          a.falarmdt,
          d.fhiino
     from hii.ip_tbs_monitoralarm a
@@ -77,10 +92,14 @@ begin
       on d.fnodecode=nvl(ltrim(trim(a.fscode),'0'),'0')
     left join hii.ib_tbs_standard s
       on trim(s.fsdid)=trim(a.fitemno)
+    left join latest_deal l
+      on trim(l.fmaguid)=trim(a.fmaguid)
 )
 select falarmid,falarmtypecode,falarmtype,fsourcecode,fdeviceid,fdevicecode,
        fdevicename,flocation,fdeptno,fmetriccode,fmetricname,funit,fvalue,
-       fcondition,flevel,fstatus,fifvalid,fifdeal,
+       fcondition,flevel,fstatus,fifvalid,fifdeal,fdeallogid,fdealaction,
+       fdealresult,frecovered,fdealempid,
+       to_char(fdealdt,'yyyy-mm-dd hh24:mi:ss') fdealtime,
        to_char(falarmdt,'yyyy-mm-dd hh24:mi:ss') falarmtime
   from alarm_data a
  where (? is null or a.falarmtypecode=?)
@@ -93,8 +112,8 @@ select falarmid,falarmtypecode,falarmtype,fsourcecode,fdeviceid,fdevicecode,
    and (? is null or a.falarmdt<=to_date(?,'yyyy-mm-dd hh24:mi:ss'))
  order by a.falarmdt desc,a.falarmid~';
 
-  bsql_pv := 'hiino_sql_equal,hiino_sql_equal,alarm_type_sql_equal,alarm_type_sql_equal,metric_sql_equal,metric_sql_equal,metric_sql_equal,device_sql_equal,device_sql_equal,device_sql_equal,keyword_sql_equal,keyword_sql_equal,keyword_sql_equal,level_sql_equal,level_sql_equal,status_sql_equal,status_sql_equal,start_time_sql_equal,start_time_sql_equal,end_time_sql_equal,end_time_sql_equal;';
-  bsql_pt := 'N,N,V,V,V,V,V,V,V,V,V,V,V,V,V,V,V,V,V,V,V;';
+  bsql_pv := 'hiino_sql_equal,hiino_sql_equal,hiino_sql_equal,hiino_sql_equal,alarm_type_sql_equal,alarm_type_sql_equal,metric_sql_equal,metric_sql_equal,metric_sql_equal,device_sql_equal,device_sql_equal,device_sql_equal,keyword_sql_equal,keyword_sql_equal,keyword_sql_equal,level_sql_equal,level_sql_equal,status_sql_equal,status_sql_equal,start_time_sql_equal,start_time_sql_equal,end_time_sql_equal,end_time_sql_equal;';
+  bsql_pt := 'N,N,N,N,V,V,V,V,V,V,V,V,V,V,V,V,V,V,V,V,V,V,V;';
   insert into query_tbs_dispfmt(fid,fband,fsql,fparavalofsql,fparatypeofsql,fxml,fxsl,fdispfmt)
   values(id,'DETAILS',bsql,bsql_pv,bsql_pt,null,null,'RS');
 end;
