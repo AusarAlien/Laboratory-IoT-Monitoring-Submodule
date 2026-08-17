@@ -33,7 +33,7 @@
         <div class="query-actions"><button class="button" data-reset="result">重置</button><button class="button button-primary" data-search="result">查询</button></div>
       </div></div>
       <section class="list-panel"><header class="panel-title"><i></i><h2>设备采集结果</h2><em id="resultSummary"></em><button id="resultExport" class="button title-action">导出当前结果</button></header>
-        <div class="table-scroll"><table class="result-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>采集时间</th><th>设备编号</th><th>设备名称</th><th>设备类型</th><th>所属区域</th><th>监测指标</th><th>采集值</th><th>单位</th><th>数据状态</th><th>采集批次</th></tr></thead><tbody id="resultRows"></tbody></table><div id="resultEmpty" class="empty is-hidden">暂无符合条件的采集结果</div></div>
+        <div class="table-scroll"><table class="result-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>采集时间</th><th>设备编号</th><th>设备名称</th><th>采集端</th><th>设备类型</th><th>所属区域</th><th>监测指标</th><th>采集值</th><th>单位</th><th>数据状态</th><th>采集批次</th></tr></thead><tbody id="resultRows"></tbody></table><div id="resultEmpty" class="empty is-hidden">暂无符合条件的采集结果</div></div>
         <div id="resultPager" class="pagination"></div>
       </section>
     </section>
@@ -58,8 +58,8 @@
   <div id="toast" class="toast is-hidden"></div>
   {# Mock 降级：<script src="{% static 'ynjksys/syswljk_sjcj_mock.js' %}"></script> #}
   <script src="{% static 'ynjksys/syswljk_wsd_service.js' %}?v=2026081302"></script>
-  <script src="{% static 'ynjksys/syswljk_energy_service.js' %}?v=2026081401"></script>
-  <script src="{% static 'ynjksys/syswljk_sjcj_service.js' %}?v=2026081401"></script>
-  <script src="{% static 'ynjksys/syswljk_sjcj_list.js' %}?v=2026081401"></script>
+  <script src="{% static 'ynjksys/syswljk_energy_service.js' %}?v=2026081402"></script>
+  <script src="{% static 'ynjksys/syswljk_sjcj_service.js' %}?v=2026081402"></script>
+  <script src="{% static 'ynjksys/syswljk_sjcj_list.js' %}?v=2026081403"></script>
 </body>
 </html>

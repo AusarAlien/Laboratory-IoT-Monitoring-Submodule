@@ -20,6 +20,11 @@
     exceptions: [
       { id: "E-001", time: "2026-08-17 09:22:15", personId: "P-1005", source: "门禁系统", type: "通行失败", location: "废物处置间", level: "重要", status: "待确认", description: "人员数据卡未匹配当前门点通行范围" },
       { id: "E-002", time: "2026-08-17 07:26:49", personId: "P-1003", source: "门禁系统", type: "非工作时段活动", location: "样本冷库", level: "提示", status: "已记录", description: "活动时间不在常规工作时段内" }
+    ],
+    sources: [
+      { id: "SRC-HR", name: "人员管理系统", category: "人员主档", status: "正常", lastTime: "2026-08-17 10:40:00", interval: "实时", todayCount: 6, exceptionCount: 0 },
+      { id: "SRC-ACCESS", name: "门禁系统", category: "出入活动", status: "正常", lastTime: "2026-08-17 10:42:16", interval: "实时", todayCount: 17, exceptionCount: 2 },
+      { id: "SRC-VISITOR", name: "访客系统", category: "访客活动", status: "正常", lastTime: "2026-08-17 09:51:22", interval: "5分钟", todayCount: 2, exceptionCount: 0 }
     ]
   };
 })(window);

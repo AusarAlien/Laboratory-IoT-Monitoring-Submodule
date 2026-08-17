@@ -1,6 +1,6 @@
 (function (global) {
   "use strict";
-  var data = global.YktData || { people: [], activities: [], exceptions: [] };
+  var data = global.YktData || { people: [], activities: [], exceptions: [], sources: [] };
   var state = { tab: "people", rows: [], page: 1, pageSize: 10 };
   function el(id) { return document.getElementById(id); }
   function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -11,18 +11,21 @@
   var config = {
     people: { title: "人员活动卡", statuses: ["在职"], columns: [] },
     activities: { title: "活动记录", statuses: ["正常", "异常"], columns: [["操作", "action"], ["序号", "seq"], ["活动时间", "time"], ["人员编号", "personId"], ["人员姓名", "personName"], ["所属部门", "dept"], ["来源系统", "source"], ["活动类型", "type"], ["活动位置", "location"], ["识别方式", "method"], ["结果", "result"]] },
-    exceptions: { title: "异常活动", statuses: ["待确认", "已记录"], columns: [["操作", "action"], ["序号", "seq"], ["发生时间", "time"], ["人员编号", "personId"], ["人员姓名", "personName"], ["所属部门", "dept"], ["来源系统", "source"], ["异常类型", "type"], ["活动位置", "location"], ["级别", "level"], ["状态", "status"]] }
+    exceptions: { title: "异常活动", statuses: ["待确认", "已记录"], columns: [["操作", "action"], ["序号", "seq"], ["发生时间", "time"], ["人员编号", "personId"], ["人员姓名", "personName"], ["所属部门", "dept"], ["来源系统", "source"], ["异常类型", "type"], ["活动位置", "location"], ["级别", "level"], ["状态", "status"]] },
+    sources: { title: "数据接入状态", statuses: ["正常", "异常"], columns: [["操作", "action"], ["序号", "seq"], ["系统编码", "id"], ["来源系统", "name"], ["数据类别", "category"], ["状态", "status"], ["最近接收时间", "lastTime"], ["更新周期", "interval"], ["今日数据", "todayCount"], ["异常数据", "exceptionCount"]] }
   };
   function sourceRows() {
     if (state.tab === "people") return data.people.slice();
     if (state.tab === "activities") return data.activities.map(function (x) { var p = person(x.personId) || {}; return Object.assign({}, x, { personName: p.name, dept: p.dept }); });
-    return data.exceptions.map(function (x) { var p = person(x.personId) || {}; return Object.assign({}, x, { personName: p.name, dept: p.dept }); });
+    if (state.tab === "exceptions") return data.exceptions.map(function (x) { var p = person(x.personId) || {}; return Object.assign({}, x, { personName: p.name, dept: p.dept }); });
+    return data.sources.slice();
   }
   function metrics() {
     el("mPeople").textContent = data.people.length;
     el("mActivePeople").textContent = data.people.filter(function (x) { return num(x.todayCount) > 0; }).length;
     el("mActivities").textContent = data.people.reduce(function (sum, x) { return sum + num(x.todayCount); }, 0);
     el("mExceptions").textContent = data.people.reduce(function (sum, x) { return sum + num(x.exceptionCount); }, 0);
+    el("mSources").textContent = data.sources.length;
   }
   function filter() {
     var keyword = el("keyword").value.trim().toLowerCase(), dept = el("department").value, source = el("source").value, status = el("status").value;
@@ -105,9 +108,7 @@
   function initOptions() {
     var departments = Array.from(new Set(data.people.map(function (x) { return x.dept; })));
     el("department").innerHTML += departments.map(function (x) { return "<option>" + esc(x) + "</option>"; }).join("");
-    var personSources = [].concat.apply([], data.people.map(function (x) { return x.sources || []; }));
-    var sources = Array.from(new Set(personSources.concat(data.activities.map(function (x) { return x.source; }), data.exceptions.map(function (x) { return x.source; }))));
-    el("source").innerHTML += sources.map(function (x) { return "<option>" + esc(x) + "</option>"; }).join("");
+    el("source").innerHTML += data.sources.map(function (x) { return "<option>" + esc(x.name) + "</option>"; }).join("");
   }
   initOptions(); switchTab("people");
 })(window);

@@ -1,7 +1,7 @@
 (function (global) {
   "use strict";
   var S = global.SyswljkStatusService,
-    PAGE = 8,
+    PAGE = 10,
     data = { devices: [], history: [], mappings: [] },
     state = {
       page: { realtime: 1, history: 1, mapping: 1 },
@@ -208,6 +208,8 @@
             ">" +
             esc(x.name) +
             "</td><td>" +
+            esc(x.socket || "--") +
+            "</td><td>" +
             esc(x.type) +
             "</td><td>" +
             esc(x.area) +
@@ -246,6 +248,8 @@
             esc(d.code) +
             "</td><td>" +
             esc(d.name) +
+            "</td><td>" +
+            esc(d.socket || "--") +
             "</td><td>" +
             esc(d.type) +
             "</td><td>" +
@@ -312,14 +316,23 @@
       titleText = "设备实时状态详情";
       items = [
         ["设备编号", x.code],
+        ["仪器主键", x.instrumentId],
         ["设备名称", x.name],
+        ["规格型号", x.model],
+        ["插座编号", x.socket],
         ["设备类型", x.type],
         ["所属区域", x.area],
+        ["存放位置", x.location],
         ["统一状态", x.status],
         ["设备原始状态", x.rawName + "（" + x.rawCode + "）"],
         ["最后通信时间", x.lastTime],
         ["离线阈值", x.timeout + " 秒"],
         ["状态持续时间", x.duration],
+        ["最新电流", x.current == null ? "--" : x.current + " A"],
+        ["最新电压", x.voltage == null ? "--" : x.voltage + " V"],
+        ["最新功率", x.power == null ? "--" : x.power + " kW"],
+        ["累计能耗", x.energy == null ? "--" : x.energy + " kWh"],
+        ["累计使用时长", x.useHours == null ? "--" : x.useHours + " h"],
         ["状态说明", x.description, "full"],
       ];
     } else if (kind === "history") {
@@ -331,6 +344,7 @@
       items = [
         ["设备编号", d.code],
         ["设备名称", d.name],
+        ["插座编号", d.socket],
         ["变更时间", h.time],
         ["变更前状态", h.before],
         ["变更后状态", h.after],

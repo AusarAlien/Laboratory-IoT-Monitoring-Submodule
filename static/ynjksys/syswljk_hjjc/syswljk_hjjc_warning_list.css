@@ -1,9 +1,9 @@
 .alarm-table {
-    min-width: 2100px
+    min-width: 1480px
 }
 
 .alarm-table th:nth-child(1) {
-    width: 240px
+    width: 100px
 }
 
 .alarm-table th:nth-child(2) {
@@ -35,17 +35,10 @@
     width: 110px
 }
 
-.alarm-table th:nth-child(10),
-.alarm-table th:nth-child(11),
-.alarm-table th:nth-child(12),
-.alarm-table th:nth-child(13) {
+.alarm-table th:nth-child(9) {
     width: 120px
 }
 
-.alarm-table th:nth-child(14) {
-    width: 120px
-}
-
-.alarm-table th:nth-child(15) {
+.alarm-table th:nth-child(10) {
     width: 300px
 }

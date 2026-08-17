@@ -5,13 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>一卡通管理</title>
-  <link rel="stylesheet" href="{% static 'ynjksys/syswljk_ykt_list.css' %}?v=2026081702">
+  <link rel="stylesheet" href="{% static 'ynjksys/syswljk_ykt_list.css' %}?v=2026081701">
 </head>
 <body>
 <main class="page">
   <section class="metrics">
-    <table><thead><tr><th>人员总数</th><th>今日活动人员</th><th>今日活动次数</th><th>异常活动</th></tr></thead>
-      <tbody><tr><td><strong id="mPeople">0</strong><span>人</span></td><td><strong id="mActivePeople">0</strong><span>人</span></td><td><strong id="mActivities">0</strong><span>次</span></td><td class="bad"><strong id="mExceptions">0</strong><span>条</span></td></tr></tbody></table>
+    <table><thead><tr><th>人员总数</th><th>今日活动人员</th><th>今日活动次数</th><th>异常活动</th><th>接入子系统</th></tr></thead>
+      <tbody><tr><td><strong id="mPeople">0</strong><span>人</span></td><td><strong id="mActivePeople">0</strong><span>人</span></td><td><strong id="mActivities">0</strong><span>次</span></td><td class="bad"><strong id="mExceptions">0</strong><span>条</span></td><td class="good"><strong id="mSources">0</strong><span>个</span></td></tr></tbody></table>
   </section>
 
   <section class="panel">
@@ -19,6 +19,7 @@
       <button class="active" data-tab="people">人员活动卡</button>
       <button data-tab="activities">活动记录</button>
       <button data-tab="exceptions">异常活动</button>
+      <button data-tab="sources">数据接入状态</button>
     </nav>
     <div class="query">
       <label><span>关键字</span><input id="keyword" placeholder="姓名、人员编号、卡号或位置"></label>
@@ -38,7 +39,7 @@
 </main>
 
 <div class="modal hidden" id="modal"><div class="mask" data-close></div><section><header><h2 id="modalTitle"></h2><button data-close>×</button></header><div class="modal-body" id="modalBody"></div><footer><button class="button primary" data-close>关闭</button></footer></section></div>
-<script src="{% static 'ynjksys/syswljk_ykt_mock.js' %}?v=2026081702"></script>
-<script src="{% static 'ynjksys/syswljk_ykt_list.js' %}?v=2026081702"></script>
+<script src="{% static 'ynjksys/syswljk_ykt_mock.js' %}?v=2026081701"></script>
+<script src="{% static 'ynjksys/syswljk_ykt_list.js' %}?v=2026081701"></script>
 </body>
 </html>

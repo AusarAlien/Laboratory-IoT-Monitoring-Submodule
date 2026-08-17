@@ -149,9 +149,11 @@
           "</td><td>" +
           esc(r.time) +
           "</td><td>" +
-          esc(r.deviceIp) +
+          esc(r.deviceCode || r.deviceIp) +
           "</td><td>" +
           esc(r.deviceName) +
+          "</td><td>" +
+          esc(r.socket || r.deviceIp || "--") +
           "</td><td>" +
           esc(r.deviceType || val("queryType")) +
           "</td><td>" +
@@ -231,8 +233,10 @@
       groups = {};
     trend.forEach(function (r) {
       if (r.value == null) return;
-      (groups[r.deviceId] = groups[r.deviceId] || {
-        name: r.deviceName,
+      var groupKey = r.deviceId + "|" + (r.socket || r.deviceIp || ""),
+        seriesName = r.deviceName + (r.socket ? "（" + r.socket + "）" : "");
+      (groups[groupKey] = groups[groupKey] || {
+        name: seriesName,
         data: [],
       }).data.push([r.time.replace(" ", "T"), r.value]);
     });
@@ -497,10 +501,13 @@
             r.unit,
       a = [
         ["监测时间", r.time],
-        ["设备编号", r.deviceIp],
+        ["设备编号", r.deviceCode || r.deviceIp],
         ["设备名称", r.deviceName],
+        ["规格型号", r.deviceModel || "--"],
+        ["采集端", r.socket || r.deviceIp || "--"],
         ["设备类型", r.deviceType],
         ["所属科室", r.dept],
+        ["存放位置", r.location || "--"],
         ["监测指标", r.metricName],
         [
           "监测值",
@@ -533,6 +540,7 @@
           "监测时间",
           "设备编号",
           "设备名称",
+          "采集端",
           "设备类型",
           "所属科室",
           "监测指标",
@@ -545,8 +553,9 @@
           rows.map(function (r) {
             return [
               r.time,
-              r.deviceIp,
+              r.deviceCode || r.deviceIp,
               r.deviceName,
+              r.socket || r.deviceIp,
               r.deviceType,
               r.dept,
               r.metricName,
