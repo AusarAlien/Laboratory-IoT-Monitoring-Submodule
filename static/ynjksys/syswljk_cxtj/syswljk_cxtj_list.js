@@ -4,6 +4,10 @@
     devices = [],
     rows = [],
     statRows = [],
+    statSource = [],
+    statColumns = [],
+    statMeasures = [],
+    statCellRows = {},
     page = 1,
     PAGE = 10,
     total = 0,
@@ -70,10 +74,10 @@
       startTime: dt(val(prefix + "Start"), false),
       endTime: dt(val(prefix + "End"), true),
       type: val(prefix + "Type"),
-      device: stat ? null : val("queryDevice"),
-      dept: stat ? null : val("queryArea"),
-      metric: val(prefix + "Item"),
-      status: stat ? null : val("queryStatus"),
+      device: stat ? val("statDevice") : val("queryDevice"),
+      dept: stat ? val("statArea") : val("queryArea"),
+      metric: val(prefix + "Item") || null,
+      status: stat ? val("statStatus") : val("queryStatus"),
       page: page,
       pageSize: PAGE,
     };
@@ -83,7 +87,7 @@
       list = METRICS[type] || [],
       select = el(prefix + "Item"),
       old = select.value;
-    select.innerHTML = list
+    select.innerHTML = (prefix === "stat" ? '<option value="">全部指标</option>' : "") + list
       .map(function (x) {
         return '<option value="' + x[0] + '">' + x[1] + "</option>";
       })
@@ -120,10 +124,16 @@
         })
         .join("");
   }
+  function setStatisticsOptions() {
+    var type = val("statType"), list = devices.filter(function (d) { return d.type === type; }), depts = [];
+    el("statDevice").innerHTML = '<option value="">全部设备</option>' + list.map(function (d) { if (depts.indexOf(d.dept) < 0) depts.push(d.dept); return '<option value="' + esc(d.id) + '">' + esc(d.name) + "</option>"; }).join("");
+    el("statArea").innerHTML = '<option value="">全部科室</option>' + depts.sort().map(function (d) { return "<option>" + esc(d) + "</option>"; }).join("");
+  }
   function options() {
     setMetricOptions("query");
     setMetricOptions("stat");
     setDeviceOptions();
+    setStatisticsOptions();
   }
   function tag(v) {
     return (

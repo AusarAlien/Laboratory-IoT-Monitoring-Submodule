@@ -3,7 +3,13 @@
 
   var CONFIG = {
     defaultDbnm: "ynjk",
-    qids: { alarms: "ynjksys_wljk_jcyj_bj01q" },
+    qids: {
+      alarms: "ynjksys_wljk_jcyj_bj01q",
+      devices: "ynjksys_hjjc_wsd_sb01q",
+      standards: "ynjksys_hjjc_wsd_bz01q",
+      rules: "ynjksys_wljk_jcyj_gz01q",
+      saveRule: "ynjksys_wljk_jcyj_gz01s",
+    },
   };
 
   function common() {
@@ -103,6 +109,94 @@
     });
   }
 
+  function mapDevice(row) {
+    return {
+      id: String(field(row, "FDEVICEIP") || field(row, "FDEVICEID") || ""),
+      code: String(field(row, "FDEVICEIP") || ""),
+      name: String(field(row, "FDEVICENAME") || field(row, "FLOCATION") || "环境监测设备"),
+      area: String(field(row, "FLOCATION") || field(row, "FDEVICENAME") || "未设置"),
+      dept: String(field(row, "FDEPTNO") || "未设置"),
+      type: String(field(row, "FDEVICETYPE") || "温湿度监测设备"),
+    };
+  }
+
+  function mapStandard(row) {
+    return {
+      id: String(field(row, "FSTANDARDID") || ""),
+      code: String(field(row, "FMETRICCODE") || field(row, "FSTANDARDID") || ""),
+      name: String(field(row, "FMETRICNAME") || ""),
+      unit: String(field(row, "FUNIT") || ""),
+      lower: field(row, "FLOWER") === "" ? null : Number(field(row, "FLOWER")),
+      upper: field(row, "FUPPER") === "" ? null : Number(field(row, "FUPPER")),
+    };
+  }
+
+  function mapRule(row) {
+    return {
+      id: String(field(row, "FRULEID") || ""),
+      name: String(field(row, "FRULENAME") || ""),
+      deviceType: String(field(row, "FDEVICETYPE") || "温湿度监测设备"),
+      targetType: String(field(row, "FTARGETTYPE") || "ALL"),
+      targetId: String(field(row, "FTARGETID") || ""),
+      targetName: String(field(row, "FTARGETNAME") || "全部同类设备"),
+      metricId: String(field(row, "FITEMNO") || ""),
+      metric: String(field(row, "FMETRICNAME") || field(row, "FITEMNO") || ""),
+      unit: String(field(row, "FUNIT") || ""),
+      lower: field(row, "FLOWER") === "" ? null : Number(field(row, "FLOWER")),
+      upper: field(row, "FUPPER") === "" ? null : Number(field(row, "FUPPER")),
+      count: Number(field(row, "FCONTCOUNT")) || 1,
+      duration: Number(field(row, "FDURATION")) || 0,
+      level: String(field(row, "FALARMLEVEL") || "一般"),
+      push: String(field(row, "FPUSHPLATFORM") || "0") === "1",
+      status: String(field(row, "FSTATUS") || "1") === "1" ? "启用" : "停用",
+      effectiveBegin: String(field(row, "FEFFECTIVEBEGIN") || ""),
+      effectiveEnd: String(field(row, "FEFFECTIVEEND") || ""),
+      remark: String(field(row, "FREMARK") || ""),
+      operator: String(field(row, "FEMPNAME") || field(row, "FEMPID") || ""),
+      updateTime: String(field(row, "FUPDATETIME") || ""),
+    };
+  }
+
+  function saveRule(operation, rule) {
+    return new Promise(function (resolve, reject) {
+      if (!global.issubmit || typeof global.issubmit.submit !== "function") {
+        reject(new Error("数据保存服务暂不可用"));
+        return;
+      }
+      var item = {
+        "数据状态": operation,
+        FRULEID: rule.id || "",
+        FRULENAME: rule.name || "",
+        FDEVICETYPE: rule.deviceType || "温湿度监测设备",
+        FTARGETTYPE: rule.targetType || "ALL",
+        FTARGETID: rule.targetId || "",
+        FITEMNO: rule.metricId || "",
+        FLOWER: rule.lower == null ? "" : rule.lower,
+        FUPPER: rule.upper == null ? "" : rule.upper,
+        FCONTCOUNT: rule.count || 1,
+        FDURATION: rule.duration || 0,
+        FALARMLEVEL: rule.level || "一般",
+        FPUSHPLATFORM: rule.push ? "1" : "0",
+        FSTATUS: rule.status === "停用" ? "0" : "1",
+        FEFFECTIVEBEGIN: rule.effectiveBegin || "",
+        FEFFECTIVEEND: rule.effectiveEnd || "",
+        FREMARK: rule.remark || "",
+      };
+      global.issubmit.submit({
+        qid: CONFIG.qids.saveRule,
+        data: [item],
+        successCallback: function (result) {
+          if (result && (String(result.success).toLowerCase() === "false" || /失败/.test(String(result.message || "")))) {
+            reject(new Error(result.message || "规则保存失败"));
+            return;
+          }
+          resolve(result || {});
+        },
+        errorCallback: reject,
+      });
+    });
+  }
+
   function loadAlarms(filters) {
     return query(CONFIG.qids.alarms, params(filters)).then(function (rows) { return rows.map(mapAlarm); });
   }
@@ -118,5 +212,15 @@
         return { devices: devicesOf(alarms), alarms: alarms, rules: [], pushes: [] };
       });
     },
+    loadRuleContext: function () {
+      return Promise.all([
+        query(CONFIG.qids.devices, {}).then(function (rows) { return rows.map(mapDevice); }),
+        query(CONFIG.qids.standards, {}).then(function (rows) { return rows.map(mapStandard); }),
+        query(CONFIG.qids.rules, {}).then(function (rows) { return rows.map(mapRule); }),
+      ]).then(function (result) {
+        return { devices: result[0], standards: result[1], rules: result[2] };
+      });
+    },
+    saveRule: saveRule,
   };
 })(window);
