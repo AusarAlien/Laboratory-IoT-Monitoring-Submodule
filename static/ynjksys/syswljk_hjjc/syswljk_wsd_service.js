@@ -39,23 +39,14 @@
   }
   function query(qid, business) {
     return new Promise(function (resolve, reject) {
-      if (!global.isqrydata || typeof global.isqrydata.query !== "function") { reject(new Error("数据服务暂不可用")); return; }
+      if (!global.isqrydata || typeof global.isqrydata.query !== "function" || !global.SyswljkQueryGuard) { reject(new Error("数据服务暂不可用")); return; }
       var params = common();
       Object.keys(business || {}).forEach(function (key) { params[key] = business[key]; });
       global.isqrydata.query({
         qid: qid,
         data: params,
         successCallback: function (result) {
-          /* 平台会把有效 SQL 的空结果也返回为 querydata报错；此情形按空集合处理。 */
-          if (result && String(result.success).toLowerCase() === "false" && String(result.message || "").indexOf("querydata") >= 0) {
-            resolve([]);
-            return;
-          }
-          if (result && String(result.success).toLowerCase() === "false") {
-            reject(new Error(result.message || "数据加载失败"));
-            return;
-          }
-          resolve(objectRows(result));
+          global.SyswljkQueryGuard.settle(result, { qid: qid, resolve: resolve, reject: reject, map: objectRows, message: "数据加载失败" });
         },
         errorCallback: reject,
       });

@@ -26,15 +26,11 @@
   }
   function query(qid) {
     return new Promise(function (resolve, reject) {
-      if (!global.isqrydata || typeof global.isqrydata.query !== "function") { reject(new Error("数据服务暂不可用")); return; }
+      if (!global.isqrydata || typeof global.isqrydata.query !== "function" || !global.SyswljkQueryGuard) { reject(new Error("数据服务暂不可用")); return; }
       global.isqrydata.query({
         qid: qid,
         data: common(),
-        successCallback: function (result) {
-          if (result && String(result.success).toLowerCase() === "false" && String(result.message || "").indexOf("querydata") >= 0) { resolve([]); return; }
-          if (result && String(result.success).toLowerCase() === "false") { reject(new Error(result.message || "设备数据加载失败")); return; }
-          resolve(objectRows(result));
-        },
+        successCallback: function (result) { global.SyswljkQueryGuard.settle(result, { qid: qid, resolve: resolve, reject: reject, map: objectRows, message: "设备数据加载失败" }); },
         errorCallback: function (error) { reject(error || new Error("设备数据加载失败")); },
       });
     });

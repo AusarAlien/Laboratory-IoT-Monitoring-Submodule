@@ -43,7 +43,7 @@
   }
   function query(qid, business) {
     return new Promise(function (resolve, reject) {
-      if (!global.isqrydata || typeof global.isqrydata.query !== "function") {
+      if (!global.isqrydata || typeof global.isqrydata.query !== "function" || !global.SyswljkQueryGuard) {
         reject(new Error("数据服务暂不可用"));
         return;
       }
@@ -55,7 +55,7 @@
         qid: qid,
         data: p,
         successCallback: function (result) {
-          resolve(rows(result));
+          global.SyswljkQueryGuard.settle(result, { qid: qid, resolve: resolve, reject: reject, map: rows, message: "门禁数据加载失败" });
         },
         errorCallback: reject,
       });

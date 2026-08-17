@@ -5,7 +5,7 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>门禁管理</title>
   <link rel="stylesheet" href="{% static 'ynjksys/syswljk_mjgl_list.css' %}?v=2026081701">
-  <script src="{% static 'common/isvar.js' %}"></script><script src="{% static 'common/isqrydata.js' %}"></script>
+  <script src="{% static 'common/isvar.js' %}"></script><script src="{% static 'common/isqrydata.js' %}"></script><script src="{% static 'ynjksys/syswljk_query_guard.js' %}?v=2026081701"></script>
 </head>
 <body><main class="page">
   <section class="metrics"><table><thead><tr><th>门禁控制器</th><th>实验室/区域</th><th>查询记录</th><th>进入记录</th><th>离开记录</th></tr></thead><tbody><tr><td><strong id="mControllers">--</strong><span>台</span></td><td><strong id="mAreas">--</strong><span>个</span></td><td><strong id="mRecords">--</strong><span>条</span></td><td class="good"><strong id="mEntry">--</strong><span>条</span></td><td><strong id="mExit">--</strong><span>条</span></td></tr></tbody></table></section>
@@ -30,4 +30,4 @@
   <section id="listView" class="panel list hidden"><header><i></i><h1 id="listTitle">门禁事件</h1><em id="summary"></em><div id="headActions" class="head-actions"></div></header><div class="table-scroll"><table><thead id="thead"></thead><tbody id="tbody"><tr><td class="loading">正在加载...</td></tr></tbody></table></div><div class="pagination" id="pagination"></div></section>
 </main>
 <div class="modal hidden" id="modal"><div class="mask" data-close></div><section><header><h2 id="modalTitle"></h2><button data-close>×</button></header><div class="modal-body" id="modalBody"></div><footer><button class="button primary" data-close>关闭</button></footer></section></div><div class="toast hidden" id="toast"></div>
-<script src="{% static 'ynjksys/syswljk_mjgl_service.js' %}?v=2026081701"></script><script src="{% static 'ynjksys/syswljk_mjgl_list.js' %}?v=2026081701"></script></body></html>
+<script src="{% static 'ynjksys/syswljk_mjgl_service.js' %}?v=2026081702"></script><script src="{% static 'ynjksys/syswljk_mjgl_list.js' %}?v=2026081701"></script></body></html>
