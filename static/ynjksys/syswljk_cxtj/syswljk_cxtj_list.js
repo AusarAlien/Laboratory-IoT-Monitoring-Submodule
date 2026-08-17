@@ -43,6 +43,35 @@
   function val(id) {
     return el(id).value.trim();
   }
+  function multiOptions(id) {
+    return Array.prototype.slice.call(el(id).querySelectorAll("[data-multi-option]"));
+  }
+  function multiValues(id) {
+    var options = multiOptions(id), checked;
+    if (!options.length) return null;
+    checked = options.filter(function (n) { return n.checked; });
+    return checked.length === options.length ? null : checked.map(function (n) { return n.value; });
+  }
+  function updateMultiText(id) {
+    var root = el(id), options = multiOptions(id), checked = options.filter(function (n) { return n.checked; }), text = root.querySelector("[data-multi-text]"), all = root.querySelector("[data-multi-all]");
+    if (all) all.checked = options.length > 0 && checked.length === options.length;
+    if (!checked.length) text.textContent = "请选择";
+    else if (checked.length === options.length) text.textContent = root.dataset.allLabel;
+    else if (checked.length <= 2) text.textContent = checked.map(function (n) { return n.dataset.label; }).join("、");
+    else text.textContent = "已选 " + checked.length + " 项";
+    text.title = checked.map(function (n) { return n.dataset.label; }).join("、");
+  }
+  function setMultiOptions(id, items) {
+    var root = el(id), old = multiOptions(id), oldChecked = {}, wasAll = !old.length || old.every(function (n) { return n.checked; }), hasMatchedSelection;
+    old.forEach(function (n) { if (n.checked) oldChecked[n.value] = true; });
+    hasMatchedSelection = items.some(function (item) { return oldChecked[String(item[0])]; });
+    if (!hasMatchedSelection) wasAll = true;
+    root.innerHTML = '<button type="button" class="multi-select-trigger" data-multi-toggle="' + id + '"><span data-multi-text></span><i></i></button><div class="multi-select-panel"><label class="multi-select-option all"><input type="checkbox" data-multi-all="' + id + '"><span>' + esc(root.dataset.allLabel) + '</span></label><div>' + items.map(function (item) { var value = String(item[0]), label = String(item[1]); return '<label class="multi-select-option"><input type="checkbox" data-multi-option="' + id + '" value="' + esc(value) + '" data-label="' + esc(label) + '"' + (wasAll || oldChecked[value] ? " checked" : "") + '><span>' + esc(label) + "</span></label>"; }).join("") + "</div></div>";
+    updateMultiText(id);
+  }
+  function closeMulti(except) {
+    document.querySelectorAll(".multi-select.is-open").forEach(function (n) { if (n !== except) n.classList.remove("is-open"); });
+  }
   function toast(m) {
     var n = el("toast");
     n.textContent = m;
@@ -70,14 +99,15 @@
   }
   function params(prefix) {
     var stat = prefix === "stat";
+    var statDevice = stat ? multiValues("statDevice") : null, statArea = stat ? multiValues("statArea") : null, statItem = stat ? multiValues("statItem") : null, statStatus = stat ? multiValues("statStatus") : null;
     return {
       startTime: dt(val(prefix + "Start"), false),
       endTime: dt(val(prefix + "End"), true),
       type: val(prefix + "Type"),
-      device: stat ? val("statDevice") : val("queryDevice"),
-      dept: stat ? val("statArea") : val("queryArea"),
-      metric: val(prefix + "Item") || null,
-      status: stat ? val("statStatus") : val("queryStatus"),
+      device: stat ? (statDevice && statDevice.length === 1 ? statDevice[0] : null) : val("queryDevice"),
+      dept: stat ? (statArea && statArea.length === 1 ? statArea[0] : null) : val("queryArea"),
+      metric: stat ? (statItem && statItem.length === 1 ? statItem[0] : null) : val("queryItem") || null,
+      status: stat ? (statStatus && statStatus.length === 1 ? statStatus[0] : null) : val("queryStatus"),
       page: page,
       pageSize: PAGE,
     };
@@ -85,9 +115,11 @@
   function setMetricOptions(prefix) {
     var type = val(prefix + "Type"),
       list = METRICS[type] || [],
-      select = el(prefix + "Item"),
-      old = select.value;
-    select.innerHTML = (prefix === "stat" ? '<option value="">全部指标</option>' : "") + list
+      select,
+      old;
+    if (prefix === "stat") { setMultiOptions("statItem", list.map(function (x) { return [x[0], x[1]]; })); return; }
+    select = el(prefix + "Item"); old = select.value;
+    select.innerHTML = list
       .map(function (x) {
         return '<option value="' + x[0] + '">' + x[1] + "</option>";
       })
@@ -126,14 +158,16 @@
   }
   function setStatisticsOptions() {
     var type = val("statType"), list = devices.filter(function (d) { return d.type === type; }), depts = [];
-    el("statDevice").innerHTML = '<option value="">全部设备</option>' + list.map(function (d) { if (depts.indexOf(d.dept) < 0) depts.push(d.dept); return '<option value="' + esc(d.id) + '">' + esc(d.name) + "</option>"; }).join("");
-    el("statArea").innerHTML = '<option value="">全部科室</option>' + depts.sort().map(function (d) { return "<option>" + esc(d) + "</option>"; }).join("");
+    list.forEach(function (d) { if (depts.indexOf(d.dept) < 0) depts.push(d.dept); });
+    setMultiOptions("statDevice", list.map(function (d) { return [d.id, d.name]; }));
+    setMultiOptions("statArea", depts.sort().map(function (d) { return [d, d]; }));
   }
   function options() {
     setMetricOptions("query");
     setMetricOptions("stat");
     setDeviceOptions();
     setStatisticsOptions();
+    setMultiOptions("statStatus", [["正常", "正常"], ["超限", "超限"], ["无效", "无效"]]);
   }
   function tag(v) {
     return (
@@ -332,16 +366,11 @@
         toast("数据加载失败，请稍后重试");
       });
   }
+  var DIMENSION_NAMES = { area: "所属科室", type: "设备类型", device: "设备名称", item: "监测指标", status: "数据状态", day: "监测日期", hour: "监测小时", socket: "采集端" };
+  var MEASURE_NAMES = { count: "数据量", avg: "平均值", max: "最大值", min: "最小值", delta: "极差", alarmCount: "超限数", alarmRate: "超限率" };
   function groupLabel(r, k) {
-    return k === "area"
-      ? r.dept
-      : k === "type"
-        ? r.deviceType
-        : k === "device"
-          ? r.deviceName
-          : k === "item"
-            ? r.metricName
-            : r.time.slice(0, 10);
+    var value = k === "area" ? r.dept : k === "type" ? r.deviceType : k === "device" ? r.deviceName : k === "item" ? r.metricName : k === "status" ? r.status : k === "socket" ? (r.socket || r.deviceIp) : k === "hour" ? r.time.slice(0, 13) + ":00" : r.time.slice(0, 10);
+    return value || "未设置";
   }
   function aggregate(a, m) {
     var nums = a
@@ -352,6 +381,7 @@
         return r.value;
       });
     if (m === "count") return a.length;
+    if (m === "alarmCount") return a.filter(function (r) { return r.status === "超限"; }).length;
     if (m === "alarmRate")
       return a.length
         ? Number(
@@ -377,122 +407,84 @@
       return Number(
         (Math.max.apply(null, nums) - Math.min.apply(null, nums)).toFixed(4),
       );
-    return m === "max"
-      ? Math.max.apply(null, nums)
-      : Math.min.apply(null, nums);
+    return m === "max" ? Math.max.apply(null, nums) : Math.min.apply(null, nums);
   }
+  function selectedMeasures() { return Array.prototype.filter.call(document.querySelectorAll('input[name="statMeasure"]'), function (n) { return n.checked; }).map(function (n) { return n.value; }); }
+  function cellKey(row, column) { return row + "\u001f" + column; }
+  function formatMeasure(value, measure) { if (value == null || Number.isNaN(value)) return "--"; return value + (measure === "alarmRate" ? "%" : ""); }
   function runStatistics() {
     var p = params("stat");
+    var rowDimension = val("rowDimension"), columnDimension = val("columnDimension"), measures = selectedMeasures(), chartMeasure = val("chartMeasure");
+    var members = { metric: multiValues("statItem"), device: multiValues("statDevice"), dept: multiValues("statArea"), status: multiValues("statStatus") };
+    if (Object.keys(members).some(function (key) { return Array.isArray(members[key]) && !members[key].length; })) { toast("每类统计成员请至少勾选一项"); return; }
+    if (!measures.length) { toast("请至少选择一个度量指标"); return; }
+    if (columnDimension && columnDimension === rowDimension) { toast("行维度和列维度不能相同"); return; }
+    if (!members.metric && rowDimension !== "item" && columnDimension !== "item" && measures.concat([chartMeasure]).some(function (m) { return ["avg", "max", "min", "delta"].indexOf(m) >= 0; })) { toast("统计全部指标的数值时，请将监测指标设为行维度或列维度"); return; }
     p.page = 1;
-    p.pageSize = 5000;
+    p.pageSize = 20000;
     S.loadRows(p)
       .then(function (all) {
-        var by = {},
-          g = val("groupBy"),
-          a = val("aggregate");
-        all.forEach(function (r) {
-          var k = groupLabel(r, g);
-          (by[k] = by[k] || []).push(r);
+        var rowGroups = {}, columnSeen = {}, topN = Number(val("topN")), sortOrder = val("sortOrder");
+        statSource = (Array.isArray(all) ? all : []).filter(function (r) {
+          return (!members.metric || members.metric.indexOf(String(r.metricCode)) >= 0) && (!members.device || members.device.indexOf(String(r.deviceId || r.deviceIp)) >= 0) && (!members.dept || members.dept.indexOf(String(r.dept)) >= 0) && (!members.status || members.status.indexOf(String(r.status)) >= 0);
+        }); statMeasures = measures; statCellRows = {};
+        statSource.forEach(function (r) {
+          var row = groupLabel(r, rowDimension), column = columnDimension ? groupLabel(r, columnDimension) : "全部";
+          (rowGroups[row] = rowGroups[row] || []).push(r); columnSeen[column] = true;
+          (statCellRows[cellKey(row, column)] = statCellRows[cellKey(row, column)] || []).push(r);
         });
-        statRows = Object.keys(by)
-          .sort()
-          .map(function (k) {
-            return {
-              group: k,
-              value: aggregate(by[k], a),
-              count: by[k].length,
-              alarm: by[k].filter(function (r) {
-                return r.status === "超限";
-              }).length,
-            };
-          })
-          .filter(function (x) {
-            return x.value != null;
-          });
-        renderStatistics(g, a);
+        statColumns = Object.keys(columnSeen).sort();
+        statRows = Object.keys(rowGroups).map(function (row) {
+          var item = { group: row, source: rowGroups[row], cells: {}, sortValue: aggregate(rowGroups[row], chartMeasure) };
+          statColumns.forEach(function (column) { var source = statCellRows[cellKey(row, column)] || []; item.cells[column] = {}; measures.forEach(function (measure) { item.cells[column][measure] = aggregate(source, measure); }); });
+          return item;
+        });
+        statRows.sort(function (a, b) { if (sortOrder === "labelAsc") return a.group.localeCompare(b.group, "zh-CN"); var av = a.sortValue == null ? -Infinity : a.sortValue, bv = b.sortValue == null ? -Infinity : b.sortValue; return sortOrder === "valueAsc" ? av - bv : bv - av; });
+        if (topN > 0) statRows = statRows.slice(0, topN);
+        renderStatistics(rowDimension, columnDimension, chartMeasure);
       })
       .catch(function () {
         toast("统计数据加载失败，请稍后重试");
       });
   }
-  function renderStatistics(g, a) {
-    var gn = {
-        area: "所属科室",
-        type: "设备类型",
-        device: "设备名称",
-        item: "监测指标",
-        day: "监测日期",
-      },
-      an = {
-        count: "数据量",
-        avg: "平均值",
-        max: "最大值",
-        min: "最小值",
-        delta: "累计增量",
-        alarmRate: "超限率（%）",
-      };
-    el("groupTitle").textContent = gn[g];
-    el("valueTitle").textContent = an[a];
-    el("statisticsTitle").textContent = gn[g] + " · " + an[a];
-    el("statisticsRows").innerHTML = statRows
-      .map(function (x, i) {
-        return (
-          "<tr><td>" +
-          (i + 1) +
-          "</td><td>" +
-          esc(x.group) +
-          "</td><td>" +
-          x.value +
-          "</td><td>" +
-          x.count +
-          "</td><td>" +
-          x.alarm +
-          "</td></tr>"
-        );
-      })
-      .join("");
-    el("statisticsSummary").textContent = "（共 " + statRows.length + " 组）";
+  function renderStatistics(rowDimension, columnDimension, chartMeasure) {
+    var header = '<tr><th rowspan="' + (columnDimension ? 2 : 1) + '">序号</th><th rowspan="' + (columnDimension ? 2 : 1) + '">' + DIMENSION_NAMES[rowDimension] + "</th>";
+    statColumns.forEach(function (column) { if (columnDimension) header += '<th colspan="' + statMeasures.length + '">' + esc(column) + "</th>"; else statMeasures.forEach(function (measure) { header += "<th>" + MEASURE_NAMES[measure] + "</th>"; }); });
+    header += "</tr>";
+    if (columnDimension) { header += "<tr>"; statColumns.forEach(function () { statMeasures.forEach(function (measure) { header += "<th>" + MEASURE_NAMES[measure] + "</th>"; }); }); header += "</tr>"; }
+    el("statisticsHead").innerHTML = header;
+    el("statisticsTitle").textContent = DIMENSION_NAMES[rowDimension] + (columnDimension ? " × " + DIMENSION_NAMES[columnDimension] : "") + " · " + MEASURE_NAMES[chartMeasure];
+    el("statisticsRows").innerHTML = statRows.map(function (row, index) {
+      var html = "<tr><td>" + (index + 1) + "</td><td>" + esc(row.group) + "</td>";
+      statColumns.forEach(function (column) { statMeasures.forEach(function (measure) { var value = row.cells[column][measure]; html += '<td><button class="pivot-cell" data-stat-cell="' + encodeURIComponent(cellKey(row.group, column)) + '" data-stat-measure="' + measure + '">' + formatMeasure(value, measure) + "</button></td>"; }); });
+      return html + "</tr>";
+    }).join("");
+    el("statisticsSummary").textContent = "（" + statRows.length + " 个行成员，" + statColumns.length + " 个列成员）";
+    el("analysisRows").textContent = statSource.length + " 条";
+    el("analysisRowGroups").textContent = statRows.length + " 个";
+    el("analysisColumnGroups").textContent = statColumns.length + " 个";
+    el("analysisMeasures").textContent = statMeasures.length + " 项";
     el("statisticsEmpty").classList.toggle("is-hidden", statRows.length > 0);
     el("customEmpty").classList.toggle("is-hidden", statRows.length > 0);
-    var type = val("chartType"),
-      c = chart("customChart"),
-      series =
-        type === "pie"
-          ? [
-              {
-                type: "pie",
-                radius: "62%",
-                data: statRows.map(function (x) {
-                  return { name: x.group, value: x.value };
-                }),
-                label: { formatter: "{b}: {c}" },
-              },
-            ]
-          : [
-              {
-                type: type,
-                data: statRows.map(function (x) {
-                  return x.value;
-                }),
-                smooth: false,
-                itemStyle: { color: "#2878f0" },
-              },
-            ];
+    var type = val("chartType"), c = chart("customChart"), series;
+    if (type === "pie") {
+      series = [{ type: "pie", radius: "62%", data: statRows.map(function (row) { return { name: row.group, value: aggregate(row.source, chartMeasure) }; }), label: { formatter: "{b}: {c}" } }];
+    } else {
+      series = statColumns.map(function (column) { return { name: columnDimension ? column : MEASURE_NAMES[chartMeasure], type: type, smooth: false, data: statRows.map(function (row) { return aggregate(statCellRows[cellKey(row.group, column)] || [], chartMeasure); }) }; });
+    }
     c.clear();
     c.setOption({
       tooltip: { trigger: type === "pie" ? "item" : "axis" },
-      grid: { left: 70, right: 25, top: 35, bottom: 75 },
+      legend: { top: 8, type: "scroll" },
+      grid: { left: 78, right: 25, top: 48, bottom: 85 },
       xAxis:
         type === "pie"
           ? undefined
           : {
               type: "category",
-              data: statRows.map(function (x) {
-                return x.group;
-              }),
-              axisLabel: { rotate: 25 },
+              data: statRows.map(function (x) { return x.group; }), axisLabel: { rotate: 25, interval: 0 },
             },
-      yAxis: type === "pie" ? undefined : { type: "value", name: an[a] },
+      yAxis: type === "pie" ? undefined : { type: "value", name: MEASURE_NAMES[chartMeasure] + (chartMeasure === "alarmRate" ? "（%）" : "") },
       series: series,
     });
   }
@@ -527,6 +519,9 @@
         ["数据状态", r.status],
         ["异常说明", r.alarm || "--"],
       ];
+    el("detailModalTitle").textContent = "监控数据详情";
+    el("detailModalCard").classList.remove("wide");
+    el("detailBody").className = "detail-body";
     el("detailBody").innerHTML = a
       .map(function (x) {
         return (
@@ -539,6 +534,22 @@
       })
       .join("");
     el("detailModal").classList.remove("is-hidden");
+  }
+  function drill(cell, measure) {
+    var list = statCellRows[decodeURIComponent(cell)] || [];
+    el("detailModalTitle").textContent = "统计钻取明细 · " + MEASURE_NAMES[measure];
+    el("detailModalCard").classList.add("wide");
+    el("detailBody").className = "modal-body";
+    el("detailBody").innerHTML = '<div class="hint">共 ' + list.length + ' 条，当前展示前100条</div><div class="table-scroll"><table class="drill-table"><thead><tr><th>监测时间</th><th>设备名称</th><th>采集端</th><th>所属科室</th><th>监测指标</th><th>监测值</th><th>状态</th></tr></thead><tbody>' + list.slice(0, 100).map(function (r) { return "<tr><td>" + esc(r.time) + "</td><td>" + esc(r.deviceName) + "</td><td>" + esc(r.socket || r.deviceIp || "--") + "</td><td>" + esc(r.dept) + "</td><td>" + esc(r.metricName) + "</td><td>" + esc(r.value == null ? "--" : r.value + (r.unit ? " " + r.unit : "")) + "</td><td>" + esc(r.status) + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    el("detailModal").classList.remove("is-hidden");
+  }
+  function exportStatistics() {
+    if (!statRows.length) { toast("当前没有可导出的统计结果"); return; }
+    var header = ["序号", DIMENSION_NAMES[val("rowDimension")]], columns = [];
+    statColumns.forEach(function (column) { statMeasures.forEach(function (measure) { var name = (val("columnDimension") ? column + " / " : "") + MEASURE_NAMES[measure]; columns.push([column, measure]); header.push(name); }); });
+    var matrix = [header].concat(statRows.map(function (row, index) { return [index + 1, row.group].concat(columns.map(function (column) { return formatMeasure(row.cells[column[0]][column[1]], column[1]); })); }));
+    var content = matrix.map(function (line) { return line.map(function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }).join(","); }).join("\r\n"), link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob(["\ufeff" + content], { type: "text/csv;charset=utf-8" })); link.download = "物联多维统计.csv"; link.click(); setTimeout(function () { URL.revokeObjectURL(link.href); }, 0);
   }
   function csv() {
     if (!rows.length) {
@@ -610,13 +621,17 @@
     }, 0);
   };
   document.body.onclick = function (e) {
-    var n = e.target;
+    var toggle = e.target.closest ? e.target.closest("[data-multi-toggle]") : null, root;
+    if (toggle) { root = el(toggle.dataset.multiToggle); closeMulti(root); root.classList.toggle("is-open"); return; }
+    if (!(e.target.closest && e.target.closest(".multi-select"))) closeMulti();
+    var n = e.target.closest ? (e.target.closest("[data-close],[data-search],[data-detail],[data-stat-cell],[data-page],[data-dir],[data-reset]") || e.target) : e.target;
     if (n.dataset.close !== undefined)
       el("detailModal").classList.add("is-hidden");
     else if (n.dataset.search === "query") {
       page = 1;
       query();
     } else if (n.dataset.detail) detail(n.dataset.detail);
+    else if (n.dataset.statCell) drill(n.dataset.statCell, n.dataset.statMeasure);
     else if (n.dataset.page) {
       page = Number(n.dataset.page);
       query();
@@ -638,12 +653,24 @@
         el("statEnd").value = "";
         el("statType").value = "设备能耗监测设备";
         setMetricOptions("stat");
-        el("groupBy").value = "area";
-        el("aggregate").value = "count";
+        setStatisticsOptions();
+        setMultiOptions("statStatus", [["正常", "正常"], ["超限", "超限"], ["无效", "无效"]]);
+        el("rowDimension").value = "device";
+        el("columnDimension").value = "item";
+        document.querySelectorAll('input[name="statMeasure"]').forEach(function (x) { x.checked = x.value === "count" || x.value === "avg"; });
+        el("chartMeasure").value = "count";
         el("chartType").value = "bar";
+        el("sortOrder").value = "valueDesc";
+        el("topN").value = "20";
         runStatistics();
       }
     }
+  };
+  document.body.onchange = function (e) {
+    var id = e.target.dataset.multiAll || e.target.dataset.multiOption;
+    if (!id) return;
+    if (e.target.dataset.multiAll) multiOptions(id).forEach(function (n) { n.checked = e.target.checked; });
+    updateMultiText(id);
   };
   el("queryType").onchange = function () {
     setMetricOptions("query");
@@ -653,10 +680,12 @@
   };
   el("statType").onchange = function () {
     setMetricOptions("stat");
+    setStatisticsOptions();
     runStatistics();
   };
   el("runStatistics").onclick = runStatistics;
   el("exportQuery").onclick = csv;
+  el("exportStatistics").onclick = exportStatistics;
   global.addEventListener("resize", function () {
     Object.keys(charts).forEach(function (k) {
       charts[k].resize();
