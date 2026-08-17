@@ -36,6 +36,8 @@ else:
 
 前端收到 `success:false` 后无法再判断是哪一种情况。
 
+补充确认：当前 Oracle 实现中的 `execIsQuery` 没有在成功分支把 `rtn` 设置为 `True`，因此现阶段也不能直接用 `rtn` 判断。成功执行最后一条 `SELECT` 时会产生游标字段描述 `titles`；正常空集表现为 `rslt=[]` 且 `titles` 不为空，执行失败或查询定义不存在则没有有效的 `titles`。
+
 ## 3. 本模块固定处理规则
 
 1. `success:false` 一律按查询失败处理，不得转换为空数组。
@@ -52,9 +54,17 @@ static/ynjksys/syswljk_common/syswljk_query_guard.js
 
 所有真实查询页面必须先加载该脚本，再加载各页面的数据服务。
 
-## 4. 平台接口目标契约
+## 4. 平台接口处理与目标契约
 
-平台查询入口应依据 `execIsQuery` 的执行状态判断成功或失败，不能依据 `rslt` 是否为空判断。目标响应如下。
+本地 Conda 平台的 `isimpxls/views.py` 已统一按以下条件判断：
+
+```python
+if titles is not None and rslt is not None:
+    return JsonResponse({"success": True, "title": ..., "data": rslt})
+return JsonResponse({"success": False, "message": rtndesc or "querydata报错"})
+```
+
+该改动部署到其他环境时必须同步。后续若底层 `execIsQuery` 完成改造并能可靠返回执行状态，可再改为依据明确的执行状态判断，但始终不能依据 `rslt` 是否为空判断。目标响应如下。
 
 执行成功且有数据：
 
@@ -74,7 +84,7 @@ static/ynjksys/syswljk_common/syswljk_query_guard.js
 {"success": false, "code": "QUERY_EXECUTION_FAILED", "message": "数据查询失败", "qid": "查询号"}
 ```
 
-平台公共代码升级前，本模块宁可明确显示加载失败，也不能把无法判定的失败响应伪装成正常 0 条。
+未同步上述平台公共代码的环境中，本模块宁可明确显示加载失败，也不能把无法判定的失败响应伪装成正常 0 条。
 
 ## 5. 标准排查步骤
 
