@@ -14,8 +14,8 @@
     <main class="page-container">
       <section class="metric-table-panel metric-table-global" aria-label="设备配置统计">
         <table class="metric-table">
-          <thead><tr><th>设备</th><th>启用预警</th><th>区域</th></tr></thead>
-          <tbody><tr><td><strong id="deviceCount">0</strong><span>台</span></td><td><strong id="warningCount">0</strong><span>台</span></td><td><strong id="areaCount">0</strong><span>个</span></td></tr></tbody>
+          <thead><tr><th>设备</th><th>已接入采集</th><th>设备区域</th></tr></thead>
+          <tbody><tr><td><strong id="deviceCount">0</strong><span>台</span></td><td><strong id="connectedCount">0</strong><span>台</span></td><td><strong id="areaCount">0</strong><span>个</span></td></tr></tbody>
         </table>
       </section>
 
@@ -32,14 +32,14 @@
             <label class="form-item"><span>设备名称</span><input id="deviceKeyword" placeholder="设备名称或编号" /></label>
             <label class="form-item"><span>设备类型</span><select id="deviceTypeFilter"><option value="">全部类型</option></select></label>
             <label class="form-item"><span>所属区域</span><select id="deviceAreaFilter"><option value="">全部区域</option></select></label>
-            <label class="form-item"><span>预警状态</span><select id="deviceWarningFilter"><option value="">全部状态</option><option value="1">已启用</option><option value="0">未启用</option></select></label>
+            <label class="form-item"><span>数据来源</span><select id="deviceSourceFilter"><option value="">全部来源</option></select></label>
             <div class="query-actions"><button class="button" data-reset="device">重置</button><button class="button button-primary" data-search="device">查询</button></div>
           </div>
         </div>
         <section class="list-panel">
-          <header class="panel-title"><i></i><h2>设备列表</h2><em id="deviceSummary"></em><button class="button button-primary title-action" data-add="device">新增设备</button></header>
+          <header class="panel-title"><i></i><h2>设备列表</h2><em id="deviceSummary"></em><button class="button button-primary title-action" data-refresh-devices>刷新设备</button></header>
           <div class="table-scroll">
-            <table class="device-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>设备编号</th><th>设备名称</th><th>设备类型</th><th>所属区域</th><th>连接信息</th><th>采集周期</th><th>预警</th><th>状态</th><th>修改人员</th><th>修改时间</th></tr></thead><tbody id="deviceRows"></tbody></table>
+            <table class="device-table"><thead><tr><th class="actions">操作</th><th>序号</th><th>设备编号</th><th>设备名称</th><th>设备类型</th><th>所属区域</th><th>采集端标识</th><th>连接/采集信息</th><th>档案/历史状态</th><th>数据来源</th><th>最近数据时间</th><th>机构</th></tr></thead><tbody id="deviceRows"></tbody></table>
             <div id="deviceEmpty" class="empty is-hidden">暂无符合条件的设备</div>
           </div>
           <div id="devicePager" class="pagination"></div>
@@ -100,14 +100,14 @@
       <div class="modal-mask" data-close-modal></div>
       <section class="modal-card">
         <header class="modal-header"><h2 id="modalTitle"></h2><button class="modal-close" data-close-modal aria-label="关闭">×</button></header>
-        <form id="modalForm"><div id="modalBody" class="modal-body"></div><footer class="modal-footer"><button type="button" class="button" data-close-modal>取消</button><button type="submit" class="button button-primary">保存</button></footer></form>
+        <form id="modalForm"><div id="modalBody" class="modal-body"></div><footer class="modal-footer"><button type="button" class="button" data-close-modal>关闭</button><button id="modalSave" type="submit" class="button button-primary">保存</button></footer></form>
       </section>
     </div>
     <div id="confirm" class="modal is-hidden" role="dialog" aria-modal="true"><div class="modal-mask"></div><section class="confirm-card"><h2>操作确认</h2><p id="confirmText"></p><footer><button id="confirmCancel" class="button">取消</button><button id="confirmOk" class="button button-primary">确认</button></footer></section></div>
     <div id="toast" class="toast is-hidden"></div>
 
     <script src="{% static 'ynjksys/syswljk_wlpz_mock.js' %}?v=2026081402"></script>
-    <script src="{% static 'ynjksys/syswljk_wlpz_service.js' %}?v=2026081201"></script>
-    <script src="{% static 'ynjksys/syswljk_wlpz_list.js' %}?v=2026081201"></script>
+    <script src="{% static 'ynjksys/syswljk_wlpz_service.js' %}?v=2026081703"></script>
+    <script src="{% static 'ynjksys/syswljk_wlpz_list.js' %}?v=2026081704"></script>
   </body>
 </html>
