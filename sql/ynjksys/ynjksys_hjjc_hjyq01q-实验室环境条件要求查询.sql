@@ -20,8 +20,9 @@ begin
        select 1 from htlis.lp_tbc_instfile i
         where i.fhiino=c.hiino and trim(i.libseq)=trim(l.libseq)))
 ), req as (
-  select 'LAB:'||libseq||':TEMP' freqid,'LAB:'||libseq fobjectid,libseq,
-         libname,libadd,nvl(libname,nvl(libno,ddptno)) fdepartment,
+  select 'LAB:'||libseq||':TEMP' freqid,'LAB:'||libseq fobjectid,
+         libseq flibseq,libname flibname,libadd flibadd,
+         nvl(libname,nvl(libno,ddptno)) fdepartment,
          'TEMP' fprojectcode,'温度' fprojectname,'℃' funit,
          flowtemper flower,ftoptemper fupper,fifmonitor fstatuscode
     from labs where flowtemper is not null or ftoptemper is not null

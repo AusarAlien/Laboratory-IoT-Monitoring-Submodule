@@ -34,5 +34,9 @@
   document.body.onclick = function (e) { if (e.target.dataset.close !== undefined) el("modal").classList.add("is-hidden"); if (e.target.dataset.id) view(e.target.dataset.id); if (e.target.dataset.page) { page = Number(e.target.dataset.page); render(); } if (e.target.dataset.dir) { page = Math.max(1, page + Number(e.target.dataset.dir)); render(); } };
   el("search").onclick = filter;
   el("reset").onclick = function () { el("keyword").value = ""; el("status").value = ""; filter(); };
-  S.loadAll().then(function (v) { data = v; filtered = data.projects.slice(); render(); }).catch(function () { toast("数据加载失败，请稍后重试"); });
+  S.loadProjects().then(function (projects) {
+    data.projects = projects;
+    filtered = data.projects.slice();
+    render();
+  }).catch(function () { toast("环境项目加载失败，请稍后重试"); });
 })(window);

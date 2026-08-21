@@ -81,8 +81,10 @@
       id: String(field(r, "FREQID") || ""),
       objectId: String(field(r, "FOBJECTID") || ""),
       projectId: String(field(r, "FPROJECTCODE") || ""),
+      projectName: String(field(r, "FPROJECTNAME") || field(r, "FPROJECTCODE") || ""),
       labId: String(field(r, "FLIBSEQ") || ""),
       labName: String(field(r, "FLIBNAME") || ""),
+      objectType: "实验室",
       department: String(field(r, "FDEPARTMENT") || "未设置"),
       lower: field(r, "FLOWER"),
       upper: field(r, "FUPPER"),
@@ -91,13 +93,30 @@
       source: String(field(r, "FSOURCETABLE") || ""),
     };
   }
+  function loadProjects() {
+    return query(CONFIG.qids.projects).then(function (rows) { return rows.map(mapProject); });
+  }
+  function loadObjects() {
+    return query(CONFIG.qids.objects).then(function (rows) { return rows.map(mapObject); });
+  }
+  function loadRequirements() {
+    return query(CONFIG.qids.requirements).then(function (rows) { return rows.map(mapRequirement); });
+  }
   function loadAll() {
-    return Promise.all([query(CONFIG.qids.projects), query(CONFIG.qids.objects), query(CONFIG.qids.requirements)])
+    return Promise.all([loadProjects(), loadObjects(), loadRequirements()])
       .then(function (v) {
-        return { projects: v[0].map(mapProject), objects: v[1].map(mapObject), requirements: v[2].map(mapRequirement) };
+        return { projects: v[0], objects: v[1], requirements: v[2] };
       });
   }
   /* 正式业务表的写入权限和维护边界尚未确认，本阶段仅固定真实查询映射。 */
   function saveAll() { return Promise.reject(new Error("当前页面为业务档案只读视图")); }
-  global.SyswljkEnvService = { config: CONFIG, commonParams: common, loadAll: loadAll, saveAll: saveAll };
+  global.SyswljkEnvService = {
+    config: CONFIG,
+    commonParams: common,
+    loadProjects: loadProjects,
+    loadObjects: loadObjects,
+    loadRequirements: loadRequirements,
+    loadAll: loadAll,
+    saveAll: saveAll,
+  };
 })(window);
