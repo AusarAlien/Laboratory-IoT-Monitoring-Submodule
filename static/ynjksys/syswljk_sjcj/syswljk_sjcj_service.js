@@ -2,7 +2,7 @@
 var W=global.SyswljkWsdService,E=global.SyswljkEnergyService;
 function clone(v){return JSON.parse(JSON.stringify(v));}
 function merge(a,b){return Promise.all([a,b]).then(function(v){return v[0].concat(v[1]);});}
-function result(r){return{id:r.id,deviceId:r.deviceId,time:r.time,metric:r.metricName,value:r.value,unit:r.unit,quality:r.status,batch:"--",endpoint:r.socket||r.deviceIp||"--",model:r.deviceModel||"未设置",location:r.location||"未设置",raw:r.raw||r.remark||"--"};}
+function result(r){return{id:r.id,deviceId:r.deviceId,time:r.time,metric:r.metricName,value:r.rawValue||r.value,unit:r.unit,quality:r.status,batch:"--",endpoint:r.socket||r.deviceIp||"--",model:r.deviceModel||"未设置",location:r.location||r.dept||"未设置",raw:r.raw||r.remark||"--"};}
 /* Mock 降级方案保留在 syswljk_sjcj_mock.js，但当前模板不加载，查询失败也不会自动切换。 */
 global.SyswljkCollectionService={
   config:{mockMode:false,retentionDays:90,defaultDbnm:"ynjk"},

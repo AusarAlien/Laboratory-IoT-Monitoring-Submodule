@@ -2,6 +2,7 @@
   "use strict";
   var S = global.SyswljkWsdService,
     devices = [],
+    projects = [],
     rows = [],
     chart;
   function el(id) {
@@ -59,6 +60,8 @@
       "t",
     );
     addOptions("qObject", devices, "id", "name");
+    el("qProject").innerHTML = "";
+    addOptions("qProject", projects, "code", "name");
   }
   function range(r) {
     return (
@@ -72,9 +75,9 @@
   function tag(status) {
     return (
       '<span class="tag ' +
-      (status === "正常"
+      (status === "正常" || status === "合格"
         ? "tag-success"
-        : status === "超限"
+        : status === "超限" || status === "不合格"
           ? "tag-danger"
           : "") +
       '">' +
@@ -103,7 +106,7 @@
             "</td><td>" +
             esc(r.metricName) +
             "</td><td>" +
-            (r.value == null ? "--" : r.value) +
+            (r.rawValue || (r.value == null ? "--" : r.value)) +
             "</td><td>" +
             esc(r.unit) +
             "</td><td>" +
@@ -118,8 +121,10 @@
   }
   function renderChart(trend) {
     var metric = el("qProject").value,
-      name = metric === "HUM" ? "湿度" : "温度",
-      unit = metric === "HUM" ? "%RH" : "℃",
+      project = projects.find(function (x) { return x.code === metric; }) || {},
+      first = trend.find(function (x) { return !metric || x.metricCode === metric; }) || {},
+      name = project.name || first.metricName || "环境指标",
+      unit = project.unit || first.unit || "",
       groups = {};
     trend.forEach(function (r) {
       (groups[r.deviceId] = groups[r.deviceId] || {
@@ -171,10 +176,10 @@
     el("mDevices").textContent = devices.length;
     el("mToday").textContent = summary.today;
     el("mNormal").textContent = rows.filter(function (r) {
-      return r.status === "正常";
+      return r.status === "正常" || r.status === "合格";
     }).length;
     el("mAbnormal").textContent = rows.filter(function (r) {
-      return r.status === "超限";
+      return r.status === "超限" || r.status === "不合格";
     }).length;
   }
   function load() {
@@ -199,11 +204,11 @@
     if (!r) return;
     var items = [
       ["采集时间", r.time],
-      ["所属科室", r.dept],
+      ["所属实验室", r.dept],
       ["监测对象", r.deviceName],
-      ["设备编号", r.deviceIp],
+      ["对象编号", r.deviceIp],
       ["环境项目", r.metricName],
-      ["采集结果", (r.value == null ? "--" : r.value) + " " + r.unit],
+      ["采集结果", (r.rawValue || (r.value == null ? "--" : r.value)) + " " + r.unit],
       ["标准范围", range(r)],
       ["数据状态", r.status],
       ["异常说明", r.alarm || "--"],
@@ -231,16 +236,17 @@
   el("btnReset").onclick = function () {
     el("qDept").value = "";
     el("qObject").value = "";
-    el("qProject").value = "TEMP";
+    el("qProject").value = projects.length ? projects[0].code : "";
     el("qStatus").value = "";
     load();
   };
   global.addEventListener("resize", function () {
     if (chart) chart.resize();
   });
-  S.loadDevices()
+  Promise.all([S.loadDevices(), S.loadStandards()])
     .then(function (v) {
-      devices = v;
+      devices = v[0];
+      projects = v[1].filter(function (x) { return x.statusCode !== "0"; });
       initOptions();
       load();
     })

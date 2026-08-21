@@ -49,6 +49,21 @@ begin
     from htlis.lis_chgsampdepot_reqcircu t
    where trim(t.htdeviceip) is not null
    group by trim(t.htdeviceip)
+), device_config as (
+  select c.fguid,
+         trim(c.fdevicekey) fdevicekey,
+         trim(c.farea) farea,
+         trim(c.fendpoint) fendpoint,
+         trim(c.fip) fip,
+         trim(c.fport) fport,
+         c.facqperiod,
+         trim(c.fwarn) fwarn,
+         trim(c.fstatus) fstatus,
+         trim(c.fremark) fremark,
+         c.fopdt
+    from hii.ib_tbs_iotdevicecfg c
+   where c.fdeleted = '0'
+     and c.fhiino = nvl(?, 0)
 ), unified as (
   select 'INST:' || i.instid fdevicekey,
          nvl(i.instno, i.instid) fdevicecode,
@@ -59,6 +74,13 @@ begin
          e.fssid fendpoint,
          case when e.fssid is not null then '智能插座 ' || e.fssid else null end fconnection,
          nvl(i.archivestatus, '未设置') farchivestatus,
+         case e.fstatus
+           when '1' then '正常'
+           when '2' then '异常'
+           when '3' then '关机'
+           when '4' then '待机'
+           else '--'
+         end frunstatus,
          '仪器设备档案' fdatasource,
          to_char(e.fappmonitordt, 'yyyy-mm-dd hh24:mi:ss') flastdatatime,
          i.fhiino,
@@ -80,6 +102,7 @@ begin
          '未设置',
          e.fssid,
          case when e.fssid is not null then '智能插座 ' || e.fssid else null end,
+         '未关联档案',
          case e.fstatus
            when '1' then '正常'
            when '2' then '异常'
@@ -109,6 +132,7 @@ begin
          trim(p.fdeviceip),
          trim(p.fdeviceip),
          '已登记',
+         '--',
          '环境设备档案',
          to_char(t.flasttime, 'yyyy-mm-dd hh24:mi:ss'),
          trim(p.fhiino),
@@ -122,31 +146,44 @@ begin
    where trim(p.ftype) = 'HT'
      and (nvl(?, 0) = 0 or trim(p.fhiino) = to_char(?))
 )
-select fdevicekey,
-       fdevicecode,
-       fdevicename,
-       fdevicetype,
-       fdevicetypecode,
-       farea,
-       fendpoint,
-       fconnection,
-       farchivestatus,
-       fdatasource,
-       flastdatatime,
-       fhiino,
-       fconnected,
-       finstid,
-       fssid,
-       fdeviceip,
-       fdetail
-  from unified
- order by fdevicetypecode, fdevicename, fdevicecode~';
+select u.fdevicekey,
+       u.fdevicecode,
+       u.fdevicename,
+       u.fdevicetype,
+       u.fdevicetypecode,
+       nvl(c.farea, u.farea) farea,
+       nvl(c.fendpoint, u.fendpoint) fendpoint,
+       case
+         when c.fip is not null then c.fip || case when c.fport is not null then ':' || c.fport end
+         else u.fconnection
+       end fconnection,
+       u.farchivestatus,
+       u.frunstatus,
+       u.fdatasource,
+       u.flastdatatime,
+       u.fhiino,
+       u.fconnected,
+       u.finstid,
+       u.fssid,
+       u.fdeviceip,
+       u.fdetail,
+       c.fguid fconfigid,
+       case when c.fguid is null then 0 else 1 end fconfigured,
+       c.fip fconfigip,
+       c.fport fconfigport,
+       c.facqperiod,
+       c.fwarn,
+       c.fstatus fconfigstatus,
+       c.fremark fconfigremark,
+       to_char(c.fopdt, 'yyyy-mm-dd hh24:mi:ss') fconfigtime
+  from unified u
+  left join device_config c on c.fdevicekey = u.fdevicekey
+ order by u.fdevicetypecode, u.fdevicename, u.fdevicecode~';
 
-  bsql_pv := 'hiino_sql_equal,hiino_sql_equal,hiino_sql_equal,hiino_sql_equal,hiino_sql_equal,hiino_sql_equal;';
-  bsql_pt := 'N,N,N,N,N,N;';
+  bsql_pv := 'hiino_sql_equal,hiino_sql_equal,hiino_sql_equal,hiino_sql_equal,hiino_sql_equal,hiino_sql_equal,hiino_sql_equal;';
+  bsql_pt := 'N,N,N,N,N,N,N;';
   insert into query_tbs_dispfmt(fid,fband,fsql,fparavalofsql,fparatypeofsql,fxml,fxsl,fdispfmt)
   values(id,'DETAILS',bsql,bsql_pv,bsql_pt,null,null,'RS');
 end;
 /
 commit;
-

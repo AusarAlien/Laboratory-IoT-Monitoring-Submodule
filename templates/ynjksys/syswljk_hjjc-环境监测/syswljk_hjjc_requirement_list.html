@@ -8,6 +8,9 @@
     <title>环境设备条件一览表</title>
     <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_common.css' %}?v=2026081203">
     <link rel="stylesheet" href="{% static 'ynjksys/syswljk_hjjc_requirement_list.css' %}?v=2026081203">
+    <script src="{% static 'common/isvar.js' %}"></script>
+    <script src="{% static 'common/isqrydata.js' %}"></script>
+    <script src="{% static 'ynjksys/syswljk_query_guard.js' %}?v=2026081701"></script>
 </head>
 
 <body>
@@ -19,7 +22,7 @@
                         <th>条件要求</th>
                         <th>启用要求</th>
                         <th>覆盖对象</th>
-                        <th>紧急要求</th>
+                        <th>覆盖项目</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -27,16 +30,14 @@
                         <td><strong id="mTotal">0</strong><span>条</span></td>
                         <td><strong id="mEnabled">0</strong><span>条</span></td>
                         <td><strong id="mObjects">0</strong><span>个</span></td>
-                        <td class="danger"><strong id="mUrgent">0</strong><span>条</span></td>
+                        <td><strong id="mProjects">0</strong><span>项</span></td>
                     </tr>
                 </tbody>
             </table>
         </section>
         <div class="query-panel">
-            <div class="query-grid"><label class="form-item"><span>所属科室</span><select id="qDept">
-                        <option value="">全部科室</option>
-                    </select></label><label class="form-item"><span>对象类型</span><select id="qType">
-                        <option value="">全部类型</option>
+            <div class="query-grid"><label class="form-item"><span>所属实验室</span><select id="qDept">
+                        <option value="">全部实验室</option>
                     </select></label><label class="form-item"><span>监测对象</span><select id="qObject">
                         <option value="">全部对象</option>
                     </select></label><label class="form-item"><span>环境项目</span><select id="qProject">
@@ -52,8 +53,7 @@
         </div>
         <section class="list-panel">
             <header class="panel-title"><i></i>
-                <h1>环境设备条件一览表</h1><em id="summary"></em><button class="button primary title-action"
-                    id="add">新增条件要求</button>
+                <h1>环境设备条件一览表</h1><em id="summary"></em>
             </header>
             <div class="table-scroll">
                 <table class="requirement-table">
@@ -61,18 +61,14 @@
                         <tr>
                             <th>操作</th>
                             <th>序号</th>
-                            <th>所属科室</th>
+                            <th>所属实验室</th>
                             <th>对象类型</th>
                             <th>监测对象</th>
                             <th>环境项目</th>
                             <th>下限</th>
                             <th>上限</th>
                             <th>单位</th>
-                            <th>连续超限次数</th>
-                            <th>持续时长(分钟)</th>
-                            <th>预警等级</th>
                             <th>状态</th>
-                            <th>生效日期</th>
                             <th>要求来源</th>
                         </tr>
                     </thead>
@@ -89,15 +85,13 @@
             </header>
             <form id="form">
                 <div class="modal-body" id="modalBody"></div>
-                <footer><button type="button" class="button" data-close>取消</button><button class="button primary"
-                        id="submit">保存</button></footer>
+                <footer><button type="button" class="button" data-close>关闭</button></footer>
             </form>
         </section>
     </div>
     <div class="toast is-hidden" id="toast"></div>
-    <script src="{% static 'ynjksys/syswljk_hjjc_mock.js' %}?v=2026081203"></script>
-    <script src="{% static 'ynjksys/syswljk_hjjc_service.js' %}?v=2026081203"></script>
-    <script src="{% static 'ynjksys/syswljk_hjjc_requirement_list.js' %}?v=2026081203"></script>
+    <script src="{% static 'ynjksys/syswljk_hjjc_service.js' %}?v=2026082001"></script>
+    <script src="{% static 'ynjksys/syswljk_hjjc_requirement_list.js' %}?v=2026082001"></script>
 </body>
 
 </html>

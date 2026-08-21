@@ -73,9 +73,29 @@
       area: String(field(r, "FDEPTNO") || "未设置"),
       hiino: String(field(r, "FHIINO") || ""),
       depotSeq: String(field(r, "FDEPOTSEQ") || ""),
-      type: String(field(r, "FDEVICETYPE") || "温湿度监测设备"),
+      type: "温湿度监测设备",
+      objectType: String(field(r, "FDEVICETYPE") || field(r, "FOBJECTTYPE") || "环境监测对象"),
+      labId: String(field(r, "FLIBSEQ") || ""),
+      instrumentId: String(field(r, "FINSTID") || ""),
       location: String(field(r, "FLOCATION") || field(r, "FDEVICENAME") || ""),
       description: String(field(r, "FDEVICEDESC") || ""),
+    };
+  }
+  function mapStandard(r) {
+    return {
+      id: String(field(r, "FSTANDARDID") || ""),
+      code: String(field(r, "FMETRICCODE") || field(r, "FSTANDARDID") || ""),
+      name: String(field(r, "FMETRICNAME") || field(r, "FMETRICCODE") || ""),
+      itemType: String(field(r, "FITEMTYPE") || ""),
+      unit: String(field(r, "FUNIT") || ""),
+      lowerText: String(field(r, "FLOWERTEXT") || ""),
+      upperText: String(field(r, "FUPPERTEXT") || ""),
+      defaultValue: String(field(r, "FDEFAULTVALUE") || ""),
+      itemValue: String(field(r, "FITEMVALUE") || ""),
+      statusCode: String(field(r, "FSTATECODE") || ""),
+      status: String(field(r, "FSTATE") || "未设置"),
+      order: number(field(r, "FORDER")),
+      remark: String(field(r, "FREMARK") || ""),
     };
   }
   function mapRecord(r) {
@@ -91,10 +111,12 @@
       metricCode: String(field(r, "FMETRICCODE") || ""),
       metricName: String(field(r, "FMETRICNAME") || ""),
       value: number(field(r, "FVALUE")),
+      rawValue: String(field(r, "FRAWVALUE") || ""),
       unit: String(field(r, "FUNIT") || ""),
       lower: number(field(r, "FLOWER")),
       upper: number(field(r, "FUPPER")),
       status: String(field(r, "FSTATUS") || "无效"),
+      statusCode: String(field(r, "FSTATUSCODE") || ""),
       alarm: String(field(r, "FALARMDESC") || ""),
       time: String(field(r, "FRECORDTIME") || ""),
       operator: String(field(r, "FEMPID") || ""),
@@ -119,7 +141,7 @@
   global.SyswljkWsdService = {
     config: CONFIG,
     loadDevices: function () { return query(CONFIG.qids.devices, {}).then(function (rows) { return rows.map(mapDevice); }); },
-    loadStandards: function () { return query(CONFIG.qids.standards, {}); },
+    loadStandards: function () { return query(CONFIG.qids.standards, {}).then(function (rows) { return rows.map(mapStandard); }); },
     loadRecords: function (f) {
       var p = filterParams(f); p.page_sql_equal = (f && f.page) || 1; p.page_size_sql_equal = (f && f.pageSize) || 20;
       return query(CONFIG.qids.records, p).then(function (rows) { return rows.map(mapRecord); });

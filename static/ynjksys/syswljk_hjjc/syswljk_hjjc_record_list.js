@@ -2,6 +2,7 @@
   "use strict";
   var S = global.SyswljkWsdService,
     devices = [],
+    projects = [],
     rows = [],
     summary = {},
     chart,
@@ -49,6 +50,10 @@
     devices.forEach(function (d) {
       if (depts.indexOf(d.dept) < 0) depts.push(d.dept);
     });
+    el("qProject").innerHTML = '<option value="">全部项目</option>';
+    projects.forEach(function (p) {
+      el("qProject").insertAdjacentHTML("beforeend", '<option value="' + esc(p.code) + '">' + esc(p.name) + "</option>");
+    });
     depts.sort().forEach(function (x) {
       el("qDept").insertAdjacentHTML(
         "beforeend",
@@ -65,7 +70,7 @@
   function tag(s) {
     return (
       '<span class="tag ' +
-      (s === "正常" ? "tag-success" : s === "超限" ? "tag-danger" : "") +
+      (s === "正常" || s === "合格" ? "tag-success" : s === "超限" || s === "不合格" ? "tag-danger" : "") +
       '">' +
       esc(s) +
       "</span>"
@@ -93,7 +98,7 @@
             "</td><td>" +
             esc(r.metricName) +
             "</td><td>" +
-            (r.value == null ? "--" : r.value) +
+            (r.rawValue || (r.value == null ? "--" : r.value)) +
             "</td><td>" +
             esc(r.unit) +
             "</td><td>" +
@@ -130,9 +135,11 @@
     el("recordPager").innerHTML = html;
   }
   function trend(list) {
-    var code = el("qProject").value || "TEMP",
-      name = code === "HUM" ? "湿度" : "温度",
-      unit = code === "HUM" ? "%RH" : "℃",
+    var code = el("qProject").value || (projects[0] ? projects[0].code : ""),
+      project = projects.find(function (x) { return x.code === code; }) || {},
+      first = list.find(function (x) { return x.metricCode === code; }) || {},
+      name = project.name || first.metricName || "环境指标",
+      unit = project.unit || first.unit || "",
       groups = {};
     list
       .filter(function (r) {
@@ -206,11 +213,11 @@
     if (!r) return;
     var a = [
       ["记录时间", r.time],
-      ["所属科室", r.dept],
+      ["所属实验室", r.dept],
       ["监测对象", r.deviceName],
-      ["设备编号", r.deviceIp],
+      ["对象编号", r.deviceIp],
       ["环境项目", r.metricName],
-      ["记录值", (r.value == null ? "--" : r.value) + " " + r.unit],
+      ["记录值", (r.rawValue || (r.value == null ? "--" : r.value)) + " " + r.unit],
       ["下限", r.lower == null ? "--" : r.lower],
       ["上限", r.upper == null ? "--" : r.upper],
       ["状态", r.status],
@@ -326,9 +333,10 @@
   global.addEventListener("resize", function () {
     if (chart) chart.resize();
   });
-  S.loadDevices()
+  Promise.all([S.loadDevices(), S.loadStandards()])
     .then(function (v) {
-      devices = v;
+      devices = v[0];
+      projects = v[1].filter(function (x) { return x.statusCode !== "0"; });
       options();
       load();
     })

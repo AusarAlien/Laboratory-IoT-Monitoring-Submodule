@@ -10,3 +10,14 @@
 .metric-table td strong{color:var(--primary);font-size:24px;line-height:1}
 .metric-table td span{margin-left:6px;color:#8a95a5}
 .metric-table-global{margin-bottom:14px}
+.device-table{min-width:2380px}
+.device-table th:nth-child(8){width:210px}
+.device-table th:nth-child(9){width:125px}
+.device-table th:nth-child(10){width:105px}
+.device-table th:nth-child(11){width:125px}
+.device-table th:nth-child(12){width:145px}
+.device-table th:nth-child(13){width:145px}
+.device-table th:nth-child(14){width:145px}
+.device-table th:nth-child(15){width:180px}
+.device-table th:nth-child(16){width:110px}
+.hint.full{grid-column:1/-1}

@@ -1,331 +1,40 @@
-(function () {
+(function (global) {
   "use strict";
-  var S = window.SyswljkEnvService,
-    data,
-    rows = [],
-    editing = null;
-  function el(i) {
-    return document.getElementById(i);
-  }
-  function esc(v) {
-    return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) {
-      return {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      }[c];
-    });
-  }
-  function object(id) {
-    return data.objects.find(function (x) {
-      return x.id === id;
-    });
-  }
-  function project(id) {
-    return data.projects.find(function (x) {
-      return x.id === id;
-    });
-  }
-  function options(sel, arr, key, text) {
-    arr.forEach(function (x) {
-      var o = document.createElement("option");
-      o.value = x[key];
-      o.textContent = x[text];
-      sel.appendChild(o);
-    });
-  }
-  function toast(m) {
-    el("toast").textContent = m;
-    el("toast").classList.remove("is-hidden");
-    setTimeout(function () {
-      el("toast").classList.add("is-hidden");
-    }, 1800);
-  }
+  var S = global.SyswljkEnvService, data = { projects: [], objects: [], requirements: [] }, rows = [];
+  function el(id) { return document.getElementById(id); }
+  function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function option(sel, value, text) { var o = document.createElement("option"); o.value = value; o.textContent = text; sel.appendChild(o); }
+  function toast(m) { el("toast").textContent = m; el("toast").classList.remove("is-hidden"); setTimeout(function () { el("toast").classList.add("is-hidden"); }, 2200); }
   function initOptions() {
-    options(
-      el("qDept"),
-      Array.from(
-        new Set(
-          data.objects.map(function (x) {
-            return x.department;
-          }),
-        ),
-      ).map(function (x) {
-        return { v: x, t: x };
-      }),
-      "v",
-      "t",
-    );
-    options(
-      el("qType"),
-      Array.from(
-        new Set(
-          data.objects.map(function (x) {
-            return x.type;
-          }),
-        ),
-      ).map(function (x) {
-        return { v: x, t: x };
-      }),
-      "v",
-      "t",
-    );
-    options(el("qObject"), data.objects, "id", "name");
-    options(el("qProject"), data.projects, "id", "name");
+    Array.from(new Set(data.requirements.map(function (x) { return x.department; }))).sort().forEach(function (x) { option(el("qDept"), x, x); });
+    data.objects.filter(function (x) { return x.type === "实验室"; }).forEach(function (x) { option(el("qObject"), x.id, x.name); });
+    data.projects.forEach(function (x) { option(el("qProject"), x.id, x.name); });
   }
   function filter() {
-    var d = el("qDept").value,
-      t = el("qType").value,
-      o = el("qObject").value,
-      p = el("qProject").value,
-      s = el("qStatus").value;
-    rows = data.requirements.filter(function (r) {
-      var x = object(r.objectId);
-      return (
-        (!d || x.department === d) &&
-        (!t || x.type === t) &&
-        (!o || r.objectId === o) &&
-        (!p || r.projectId === p) &&
-        (!s || r.status === s)
-      );
-    });
-    render();
+    var d = el("qDept").value, o = el("qObject").value, p = el("qProject").value, s = el("qStatus").value;
+    rows = data.requirements.filter(function (r) { return (!d || r.department === d) && (!o || r.objectId === o) && (!p || r.projectId === p) && (!s || r.status === s); }); render();
   }
   function render() {
     el("mTotal").textContent = data.requirements.length;
-    el("mEnabled").textContent = data.requirements.filter(function (x) {
-      return x.status === "启用";
-    }).length;
-    el("mObjects").textContent = new Set(
-      data.requirements.map(function (x) {
-        return x.objectId;
-      }),
-    ).size;
-    el("mUrgent").textContent = data.requirements.filter(function (x) {
-      return x.level === "紧急";
-    }).length;
+    el("mEnabled").textContent = data.requirements.filter(function (x) { return x.status === "启用"; }).length;
+    el("mObjects").textContent = new Set(data.requirements.map(function (x) { return x.objectId; })).size;
+    el("mProjects").textContent = new Set(data.requirements.map(function (x) { return x.projectId; })).size;
     el("summary").textContent = "（当前查询 " + rows.length + " 条）";
-    el("rows").innerHTML =
-      rows
-        .map(function (r, i) {
-          var o = object(r.objectId),
-            p = project(r.projectId);
-          return (
-            '<tr><td><button class="action" data-act="edit" data-id="' +
-            r.id +
-            '">修改</button><button class="action" data-act="toggle" data-id="' +
-            r.id +
-            '">' +
-            (r.status === "启用" ? "停用" : "启用") +
-            '</button><button class="action" data-act="view" data-id="' +
-            r.id +
-            '">查看</button></td><td>' +
-            (i + 1) +
-            "</td><td>" +
-            esc(o.department) +
-            "</td><td>" +
-            esc(o.type) +
-            "</td><td>" +
-            esc(o.name) +
-            "</td><td>" +
-            esc(p.name) +
-            "</td><td>" +
-            esc(r.lower) +
-            "</td><td>" +
-            esc(r.upper) +
-            "</td><td>" +
-            esc(p.unit) +
-            "</td><td>" +
-            esc(r.count) +
-            "</td><td>" +
-            esc(r.duration) +
-            '</td><td><span class="tag ' +
-            (r.level === "紧急"
-              ? "tag-danger"
-              : r.level === "重要"
-                ? "tag-warning"
-                : "tag-muted") +
-            '">' +
-            esc(r.level) +
-            '</span></td><td><span class="tag ' +
-            (r.status === "启用" ? "tag-success" : "tag-muted") +
-            '">' +
-            esc(r.status) +
-            "</span></td><td>" +
-            esc(r.effective) +
-            "</td><td>" +
-            esc(r.source) +
-            "</td></tr>"
-          );
-        })
-        .join("") ||
-      '<tr><td colspan="15" class="empty">暂无符合条件的环境条件要求</td></tr>';
+    el("rows").innerHTML = rows.map(function (r, i) {
+      var p = data.projects.find(function (x) { return x.id === r.projectId; }) || { name: r.projectId };
+      return '<tr><td><button class="action" data-id="' + esc(r.id) + '">查看</button></td><td>' + (i + 1) + "</td><td>" + esc(r.department) + "</td><td>实验室</td><td>" + esc(r.labName) + "</td><td>" + esc(p.name) + "</td><td>" + esc(r.lower == null || r.lower === "" ? "--" : r.lower) + "</td><td>" + esc(r.upper == null || r.upper === "" ? "--" : r.upper) + "</td><td>" + esc(r.unit || "--") + "</td><td>" + esc(r.status) + "</td><td>实验室档案</td></tr>";
+    }).join("") || '<tr><td colspan="11" class="empty">暂无符合条件的环境条件要求</td></tr>';
   }
-  function select(id, label, arr, value) {
-    return (
-      '<label class="field"><span class="required">' +
-      label +
-      '</span><select id="' +
-      id +
-      '">' +
-      arr
-        .map(function (x) {
-          return (
-            '<option value="' +
-            x.id +
-            '" ' +
-            (x.id === value ? "selected" : "") +
-            ">" +
-            esc(x.name) +
-            "</option>"
-          );
-        })
-        .join("") +
-      "</select></label>"
-    );
-  }
-  function input(id, label, value, type) {
-    return (
-      '<label class="field"><span class="required">' +
-      label +
-      '</span><input id="' +
-      id +
-      '" type="' +
-      (type || "text") +
-      '" value="' +
-      esc(value == null ? "" : value) +
-      '" required></label>'
-    );
-  }
-  function open(id, view) {
-    var r = id
-      ? data.requirements.find(function (x) {
-          return x.id === id;
-        })
-      : {
-          objectId: data.objects[0].id,
-          projectId: data.projects[0].id,
-          lower: "",
-          upper: "",
-          count: 3,
-          duration: 5,
-          level: "重要",
-          status: "启用",
-          effective: "2026-08-12",
-          source: "科室环境要求",
-        };
-    editing = r;
-    el("modalTitle").textContent = view
-      ? "查看环境条件要求"
-      : id
-        ? "修改环境条件要求"
-        : "新增环境条件要求";
-    var h =
-      '<div class="form-grid">' +
-      select("fObject", "监测对象", data.objects, r.objectId) +
-      select(
-        "fProject",
-        "环境项目",
-        data.projects.filter(function (x) {
-          return x.status === "启用";
-        }),
-        r.projectId,
-      ) +
-      input("fLower", "下限", r.lower, "number") +
-      input("fUpper", "上限", r.upper, "number") +
-      input("fCount", "连续超限次数", r.count, "number") +
-      input("fDuration", "持续时长（分钟）", r.duration, "number") +
-      '<label class="field"><span>预警等级</span><select id="fLevel"><option ' +
-      (r.level === "一般" ? "selected" : "") +
-      ">一般</option><option " +
-      (r.level === "重要" ? "selected" : "") +
-      ">重要</option><option " +
-      (r.level === "紧急" ? "selected" : "") +
-      '>紧急</option></select></label><label class="field"><span>使用状态</span><select id="fStatus"><option ' +
-      (r.status === "启用" ? "selected" : "") +
-      ">启用</option><option " +
-      (r.status === "停用" ? "selected" : "") +
-      ">停用</option></select></label>" +
-      input("fEffective", "生效日期", r.effective, "date") +
-      input("fSource", "要求来源", r.source) +
-      "</div>";
-    el("modalBody").innerHTML = h;
-    el("submit").style.display = view ? "none" : "";
-    if (view)
-      el("modalBody")
-        .querySelectorAll("input,select")
-        .forEach(function (x) {
-          x.disabled = true;
-        });
+  function view(id) {
+    var r = data.requirements.find(function (x) { return x.id === id; }); if (!r) return;
+    var p = data.projects.find(function (x) { return x.id === r.projectId; }) || { name: r.projectId };
+    var items = [["实验室", r.labName], ["实验室编号", r.labId], ["环境项目", p.name], ["下限", r.lower || "--"], ["上限", r.upper || "--"], ["单位", r.unit || "--"], ["状态", r.status], ["数据来源", "LIS_LIBDEF"]];
+    el("modalTitle").textContent = "环境条件要求详情";
+    el("modalBody").innerHTML = items.map(function (i) { return '<div class="detail-item"><span>' + esc(i[0]) + "</span><strong>" + esc(i[1]) + "</strong></div>"; }).join("");
     el("modal").classList.remove("is-hidden");
   }
-  function save() {
-    var lower = Number(el("fLower").value),
-      upper = Number(el("fUpper").value);
-    if (lower >= upper) {
-      toast("下限必须小于上限");
-      return;
-    }
-    var isNew = !editing.id;
-    Object.assign(editing, {
-      id: editing.id || "Q-" + Date.now(),
-      objectId: el("fObject").value,
-      projectId: el("fProject").value,
-      lower: lower,
-      upper: upper,
-      count: Number(el("fCount").value) || 1,
-      duration: Number(el("fDuration").value) || 1,
-      level: el("fLevel").value,
-      status: el("fStatus").value,
-      effective: el("fEffective").value,
-      source: el("fSource").value,
-    });
-    if (isNew) data.requirements.push(editing);
-    S.saveAll(data).then(function (v) {
-      data = v;
-      el("modal").classList.add("is-hidden");
-      filter();
-      toast("环境条件要求已保存");
-    });
-  }
-  document.body.onclick = function (e) {
-    var a = e.target.dataset.act,
-      id = e.target.dataset.id;
-    if (e.target.dataset.close !== undefined)
-      el("modal").classList.add("is-hidden");
-    if (a === "edit") open(id, false);
-    if (a === "view") open(id, true);
-    if (a === "toggle") {
-      var r = data.requirements.find(function (x) {
-        return x.id === id;
-      });
-      r.status = r.status === "启用" ? "停用" : "启用";
-      S.saveAll(data).then(function (v) {
-        data = v;
-        filter();
-        toast("使用状态已更新");
-      });
-    }
-  };
-  el("form").onsubmit = function (e) {
-    e.preventDefault();
-    save();
-  };
-  el("add").onclick = function () {
-    open(null, false);
-  };
+  document.body.onclick = function (e) { if (e.target.dataset.close !== undefined) el("modal").classList.add("is-hidden"); if (e.target.dataset.id) view(e.target.dataset.id); };
   el("search").onclick = filter;
-  el("reset").onclick = function () {
-    document.querySelectorAll(".query-panel select").forEach(function (x) {
-      x.selectedIndex = 0;
-    });
-    filter();
-  };
-  S.loadAll().then(function (v) {
-    data = v;
-    initOptions();
-    filter();
-  });
-})();
+  el("reset").onclick = function () { ["qDept", "qObject", "qProject", "qStatus"].forEach(function (id) { el(id).value = ""; }); filter(); };
+  S.loadAll().then(function (v) { data = v; rows = data.requirements.slice(); initOptions(); render(); }).catch(function () { toast("数据加载失败，请稍后重试"); });
+})(window);
